@@ -1,38 +1,74 @@
+# coding: utf-8
 """This python file will edit the tasklist in data.db."""
 
 from sqlite3 import connect, Connection, Cursor, Error
+from uuid import UUID
+
+CREATE_TASK_TABLE: str = (
+    "CREATE TABLE IF NOT EXISTS task"
+    "(uuid BLOB PRIMARY KEY, name TEXT NOT NULL, "
+    "description TEXT, due REAL NOT NULL, "
+    "assigner INT NOT NULL, assign INT NOT NULL, "
+    "group INT);"
+)
 
 
-async def add_task(
+INSERT_TASK: str = "INSERT INTO task VALUES (?, ?, ?, ?, ?, ?, ?)"
+
+
+def add_task(
+    task_id: UUID,
     task_name: str,
     task_description: str,
-    task_type: str,  # Either: group or individual.
+    task_due: float,
     assigner_id: int,
     assign_id: int,
-    group_id: int = 0
-) -> bool:
+    group_id: int,
+) -> None:
     """This will add the task."""
-    return True
+
+    # Connect to table if not exist.
+    try:
+        data_con: Connection = connect("data/data.db")
+    except Error as e_msg:
+        raise e_msg
+
+    data_cursor: Cursor = data_con.cursor()
+    data_cursor.execute(CREATE_TASK_TABLE)
+
+    if len(data_cursor.execute("SELECT * FROM test;").description) != 7:
+        data_con.close()
+        raise Exception("User Database has not been configured successfully.")
+
+    data_cursor.execute(
+        INSERT_TASK,
+        (
+            task_id,
+            task_name,
+            task_description,
+            task_due,
+            assigner_id,
+            assign_id,
+            group_id,
+        ),
+    )
+    return
 
 
-async def edit_task(
-    task_id: int,
+def edit_task(
+    task_id: UUID,
     task_name: str,
     task_description: str,
-    task_type: str,  # Either: group, individual, or self.
+    task_due: float,
     assigner_id: int,
     assign_id: int,
-    group_id: int = 0
+    group_id: int,
 ) -> bool:
     return True
 
 
-async def get_task(
-    task_name: str,
-    task_type: str,  # Either: group, individual, or self.
-    assigner_id: int,
-    assign_id: int,
-    group_id: int = 0
+def get_task(
+    task_name: str, assigner_id: int, assign_id: int, group_id: int
 ) -> dict[str, str]:
     return {}
 
