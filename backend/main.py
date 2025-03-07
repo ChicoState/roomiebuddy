@@ -6,7 +6,7 @@ from uuid import uuid4, UUID
 
 from flask import Flask, request, jsonify, Response
 
-from task import add_task
+from task import add_task, get_task_from_user
 
 
 app: Flask = Flask(__name__)
@@ -17,7 +17,7 @@ def handle_add_task() -> Response:
     """Debug Def."""
     response_json: Response
     if request.method != "POST":
-        response_json = jsonify(success=False)
+        response_json = jsonify([{"message": "Wrong request type"}], success=False)
         return response_json
     try:
         task_name: str = request.form["task_name"]
@@ -27,6 +27,9 @@ def handle_add_task() -> Response:
         task_due_date: int = int(request.form["task_due_date"])
         task_due_hour: int = int(request.form["task_due_hour"])
         task_due_min: int = int(request.form["task_due_min"])
+        task_est_day: int = int(request.form["task_est_day"])
+        task_est_hour: int = int(request.form["task_est_hour"])
+        task_est_min: int = int(request.form["task_est_min"])
         assigner_id: int = int(request.form["assigner_id"])
         assign_id: int = int(request.form["assign_id"])
         group_id: int = int(request.form["group_id"])
@@ -42,14 +45,11 @@ def handle_add_task() -> Response:
         print(e)
         return response_json
 
-    if (
-        task_name == ""
-        or assigner_id < 0
-        or assign_id < 0
-        or group_id < 0
-    ):
+    if task_name == "" or assigner_id < 0 or assign_id < 0 or group_id < 0:
         response_json = jsonify(
-            [{"message": "Given data is invalid!"}], status=200, mimetype="application/json"
+            [{"message": "Given data is invalid!"}],
+            status=200,
+            mimetype="application/json",
         )
         return response_json
 
@@ -59,6 +59,9 @@ def handle_add_task() -> Response:
             task_name=task_name,
             task_description=task_description,
             task_due=task_due,
+            task_est_day=task_est_day,
+            task_est_hour=task_est_hour,
+            task_est_min=task_est_min,
             assigner_id=assigner_id,
             assign_id=assign_id,
             group_id=group_id,
@@ -72,6 +75,36 @@ def handle_add_task() -> Response:
 
     response_json = jsonify(
         [{"message": "success"}], status=200, mimetype="application/json"
+    )
+    return response_json
+
+
+@app.route("/get_task", methods=["POST"])
+def handle_get_task() -> Response:
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"message": "Wrong request type"}], success=False)
+        return response_json
+    try:
+        user_id: int = int(request.form["user_id"])
+    except Exception as e:
+        response_json = jsonify(
+            [{"message": e}], status=200, mimetype="application/json"
+        )
+        print(e)
+        return response_json
+
+    try:
+        return_data: dict[str, dict] = get_task_from_user(user_id)
+    except Exception as e:
+        response_json = jsonify(
+            [{"message": e}], status=200, mimetype="application/json"
+        )
+        print(e)
+        return response_json
+
+    response_json = jsonify(
+        [return_data], status=200, mimetype="application/json"
     )
     return response_json
 
