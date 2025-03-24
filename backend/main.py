@@ -5,7 +5,7 @@ from datetime import datetime
 
 from flask import Flask, request, jsonify, Response
 
-from task import add_task, edit_task, get_user_task, get_group_task, add_user
+from task import add_task, edit_task  # , get_user_task, get_group_task, add_user
 
 app: Flask = Flask(__name__)
 

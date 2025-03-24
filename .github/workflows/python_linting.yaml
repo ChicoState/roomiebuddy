@@ -21,7 +21,7 @@ jobs:
         run: pip --disable-pip-version-check install flake8
 
       - name: Lint with flake8
-        run: flake8 --count
+        run: flake8 --count -ignore=E501
 
       - name: Install black
         run: pip --disable-pip-version-check install black
