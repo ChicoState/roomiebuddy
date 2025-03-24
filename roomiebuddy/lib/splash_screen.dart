@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:roomiebuddy/NavScreen.dart';
+import 'package:roomiebuddy/login_screen.dart';
 // import 'package:myapp/main.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -17,7 +17,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     Future.delayed(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const Navscreen()));
+        MaterialPageRoute(builder: (_) => const LoginScreen()));
     });
   }
 

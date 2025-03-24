@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   curved_navigation_bar: ^1.0.6
   table_calendar: ^3.2.0
+  email_validator: ^3.0.0
 
 dev_dependencies:
   flutter_test:
