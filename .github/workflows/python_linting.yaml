@@ -27,4 +27,4 @@ jobs:
         run: pip --disable-pip-version-check install black
 
       - name: Lint with black
-        run: black --count
+        run: black
