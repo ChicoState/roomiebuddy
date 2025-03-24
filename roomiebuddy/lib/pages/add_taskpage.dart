@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AddTaskpage extends StatefulWidget {
   const AddTaskpage({super.key});
@@ -8,9 +10,12 @@ class AddTaskpage extends StatefulWidget {
 }
 
 class _AddTaskpageState extends State<AddTaskpage> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _daysController = TextEditingController();
   final TextEditingController _hoursController = TextEditingController();
   final TextEditingController _minutesController = TextEditingController();
+
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +30,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
+              controller: _titleController,
               decoration: InputDecoration(
                 labelText: 'Title',
                 filled: true,
@@ -34,6 +40,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
             ),
             SizedBox(height: 10),
             TextField(
+              controller: _descriptionController,
               decoration: InputDecoration(
                 labelText: 'Description',
                 filled: true,
@@ -171,7 +178,18 @@ class _AddTaskpageState extends State<AddTaskpage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  http.post(
+                    Uri.parse('http://10.0.2.2:5000/add_task'),
+                    headers: <String, String>{
+                      'Content-Type': 'application/json; charset=UTF-8',
+                      },
+                      body: jsonEncode(<String, String>{
+                        'task_name': _titleController.text,
+                        'task_description' : _descriptionController.text,
+                      }),
+                  );
+                },
                 child: Text('Save', style: TextStyle(color: Colors.black)),
               ),
             ),
