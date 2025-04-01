@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:provider/provider.dart';
+import 'package:roomiebuddy/providers/theme_provider.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -25,10 +27,11 @@ class _CalendarPageState extends State<CalendarPage> {
   // MAIN BUILD METHOD
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Task Calendar'),
-        backgroundColor: Colors.greenAccent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -42,7 +45,7 @@ class _CalendarPageState extends State<CalendarPage> {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            _buildEventsList(),
+            _buildEventsList(themeProvider),
           ],
         ),
       ),
@@ -123,23 +126,25 @@ class _CalendarPageState extends State<CalendarPage> {
 
   // DAY CELL BUILDERS
   Widget _defaultDayBuilder(BuildContext context, DateTime day, DateTime focusedDay) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return _buildBaseDayContainer(
       day,
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.all(Radius.circular(_borderRadius)),
-        border: Border.all(color: Colors.grey, width: 0.5),
+        border: Border.all(color: themeProvider.currentBorderColor, width: 0.5),
       ),
       textStyle: const TextStyle(fontSize: _fontSize),
     );
   }
 
   Widget _selectedDayBuilder(BuildContext context, DateTime day, DateTime focusedDay) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return _buildBaseDayContainer(
       day,
-      decoration: const BoxDecoration(
-        color: Colors.greenAccent,
+      decoration: BoxDecoration(
+        color: themeProvider.themeColor,
         shape: BoxShape.rectangle,
-        borderRadius: BorderRadius.all(Radius.circular(_borderRadius)),
+        borderRadius: const BorderRadius.all(Radius.circular(_borderRadius)),
       ),
       textStyle: const TextStyle(
         fontSize: _fontSize,
@@ -149,10 +154,11 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _todayBuilder(BuildContext context, DateTime day, DateTime focusedDay) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return _buildBaseDayContainer(
       day,
       decoration: BoxDecoration(
-        color: Colors.greenAccent.withOpacity(0.5),
+        color: themeProvider.themeColor.withOpacity(0.5),
         shape: BoxShape.rectangle,
         borderRadius: const BorderRadius.all(Radius.circular(_borderRadius)),
       ),
@@ -164,15 +170,16 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _outsideDayBuilder(BuildContext context, DateTime day, DateTime focusedDay) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return _buildBaseDayContainer(
       day,
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.all(Radius.circular(_borderRadius)),
-        border: Border.all(color: Colors.grey.withOpacity(0.3), width: 0.5),
+        border: Border.all(color: themeProvider.currentBorderColor.withOpacity(0.3), width: 0.5),
       ),
-      textStyle: const TextStyle(
+      textStyle: TextStyle(
         fontSize: _fontSize,
-        color: Colors.grey,
+        color: themeProvider.currentSecondaryTextColor,
       ),
     );
   }
@@ -199,18 +206,20 @@ class _CalendarPageState extends State<CalendarPage> {
   }
   
   // EVENT LIST WIDGETS
-  Widget _buildEventsList() {
+  Widget _buildEventsList(ThemeProvider themeProvider) {
     return Expanded(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: themeProvider.currentInputFill,
           borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.all(12),
-        child: const Center(
+        child: Center(
           child: Text(
             'No events for this day',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(
+              color: themeProvider.currentSecondaryTextColor,
+            ),
           ),
         ),
       ),
