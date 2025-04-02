@@ -3,7 +3,7 @@
 
 from os.path import join
 from datetime import datetime
-from flask import Flask, request, jsonify, FileStorage, Response
+from flask import Flask, request, jsonify, Response
 from task import (
     add_task,
     add_user,
@@ -161,7 +161,7 @@ def handle_add_task() -> Response:
         recursive: int = int(request.form.get("recursive", "0"))
         priority: int = int(request.form.get("priority", "0"))
 
-        imageFile: FileStorage = request.files.get("image", None)
+        imageFile = request.files.get("image", None)
         if imageFile and imageFile.filename != "":
             fileName: str = secure_filename(imageFile.filename)
             imageFile.save(join(app.config["UPLOAD_FOLDER"], fileName))
