@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:provider/provider.dart';
+import 'package:roomiebuddy/providers/theme_provider.dart';
 
 class AddTaskpage extends StatefulWidget {
   const AddTaskpage({super.key});
@@ -8,16 +12,20 @@ class AddTaskpage extends StatefulWidget {
 }
 
 class _AddTaskpageState extends State<AddTaskpage> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _daysController = TextEditingController();
   final TextEditingController _hoursController = TextEditingController();
   final TextEditingController _minutesController = TextEditingController();
 
+
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.greenAccent,
-        title: Text('Add Task', style: TextStyle(color: Colors.black)),
+        title: Text('Add Task', style: TextStyle(color: themeProvider.lightTextColor)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -25,19 +33,17 @@ class _AddTaskpageState extends State<AddTaskpage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
+              controller: _titleController,
               decoration: InputDecoration(
                 labelText: 'Title',
-                filled: true,
-                fillColor: Colors.white,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
             SizedBox(height: 10),
             TextField(
+              controller: _descriptionController,
               decoration: InputDecoration(
                 labelText: 'Description',
-                filled: true,
-                fillColor: Colors.white,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
               maxLines: 4,
@@ -50,8 +56,6 @@ class _AddTaskpageState extends State<AddTaskpage> {
                   child: TextField(
                     decoration: InputDecoration(
                       labelText: 'Due Date',
-                      filled: true,
-                      fillColor: Colors.white,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
@@ -66,8 +70,6 @@ class _AddTaskpageState extends State<AddTaskpage> {
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                             labelText: 'Days',
-                            filled: true,
-                            fillColor: Colors.white,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         ),
@@ -79,8 +81,6 @@ class _AddTaskpageState extends State<AddTaskpage> {
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                             labelText: 'Hours',
-                            filled: true,
-                            fillColor: Colors.white,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         ),
@@ -92,8 +92,6 @@ class _AddTaskpageState extends State<AddTaskpage> {
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                             labelText: 'Minutes',
-                            filled: true,
-                            fillColor: Colors.white,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         ),
@@ -110,27 +108,27 @@ class _AddTaskpageState extends State<AddTaskpage> {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.greenAccent,
+                    backgroundColor: themeProvider.themeColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {},
-                  child: Text('Low', style: TextStyle(color: Colors.black)),
+                  child: Text('Low', style: TextStyle(color: themeProvider.lightTextColor)),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.greenAccent,
+                    backgroundColor: themeProvider.themeColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {},
-                  child: Text('Medium', style: TextStyle(color: Colors.black)),
+                  child: Text('Medium', style: TextStyle(color: themeProvider.lightTextColor)),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.greenAccent,
+                    backgroundColor: themeProvider.themeColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {},
-                  child: Text('High', style: TextStyle(color: Colors.black)),
+                  child: Text('High', style: TextStyle(color: themeProvider.lightTextColor)),
                 ),
               ],
             ),
@@ -142,8 +140,6 @@ class _AddTaskpageState extends State<AddTaskpage> {
               onChanged: (value) {},
               decoration: InputDecoration(
                 labelText: 'Select Members',
-                filled: true,
-                fillColor: Colors.white,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
@@ -152,13 +148,13 @@ class _AddTaskpageState extends State<AddTaskpage> {
               alignment: Alignment.centerLeft,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.greenAccent,
+                  backgroundColor: themeProvider.themeColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 onPressed: () {},
-                child: Text('Add a Photo', style: TextStyle(color: Colors.black)),
+                child: Text('Add a Photo', style: TextStyle(color: themeProvider.lightTextColor)),
               ),
             ),
             SizedBox(height: 10),
@@ -166,13 +162,24 @@ class _AddTaskpageState extends State<AddTaskpage> {
               alignment: Alignment.centerLeft,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.greenAccent,
+                  backgroundColor: themeProvider.themeColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () {},
-                child: Text('Save', style: TextStyle(color: Colors.black)),
+                onPressed: () {
+                  http.post(
+                    Uri.parse('http://10.0.2.2:5000/add_task'),
+                    headers: <String, String>{
+                      'Content-Type': 'application/json; charset=UTF-8',
+                      },
+                      body: jsonEncode(<String, String>{
+                        'task_name': _titleController.text,
+                        'task_description' : _descriptionController.text,
+                      }),
+                  );
+                },
+                child: Text('Save', style: TextStyle(color: themeProvider.lightTextColor)),
               ),
             ),
           ],
