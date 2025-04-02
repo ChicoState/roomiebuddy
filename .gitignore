@@ -4,7 +4,10 @@
 .env/*
 
 # ignore data db:
-data/data.db
+data/
+
+# ignore logs
+logs/
 
 # ignore .mypy_cache
 .mypy_cache
