@@ -28,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+
             const Text(
               'Login',
               style: TextStyle(
@@ -54,14 +55,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       
                       onChanged: (String value){
+                        _checkEmail(value);
                         //MIGHT NEED LATER
                       },
                       validator: (value){
                         return value!.isEmpty ? 'Please Enter Email' : null;
                       },
                     ),
+
+                    Text(
+                      isValidEmail? '':'Email is not valid',
+                      style: const TextStyle(
+                        //fontSize: 35,
+                        color: Colors.redAccent,
+                        //fontWeight: FontWeight.bold,
+                      ),
+                    ),
               
-                    const SizedBox(height: 30,),
+                    const SizedBox(height: 20,),
               
                     TextFormField(
                       keyboardType: TextInputType.visiblePassword,
@@ -82,6 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 30,),
 
+                    //LOGIN BUTTON
                     MaterialButton(
                       minWidth: double.infinity,
                       onPressed: () {
@@ -105,9 +117,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
 //WIP
-  void _checkEmail() {
+  void _checkEmail(String value) {
     setState(() {
-      isValidEmail = EmailValidator.validate(controller.text.trim());
+      //controller.text.trim()
+      isValidEmail = EmailValidator.validate(value.trim());
     });
   }
 }
