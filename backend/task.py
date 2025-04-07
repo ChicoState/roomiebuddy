@@ -546,7 +546,66 @@ def edit_task(
     group_id: str,
 ) -> bool:
     """This will edit the task."""
+    try:
+        data_con: Connection = check_table()
+        data_cursor: Cursor = data_con.cursor()
+    except Error as e_msg:
+        raise e_msg
+
+    if check_task_exists(data_con, task_id) is False:
+        data_con.close()
+        raise Exception("Task does not exist.")
+
+    if (
+        check_user_exists(data_con, assigner_id) is False
+        or check_user_exists(data_con, assign_id) is False
+        or (group_id != "" and check_group_exists(data_con, group_id) is False)
+    ):
+        data_con.close()
+        raise Exception("User or Group does not exist.")
+
+    data_cursor.execute(
+        "UPDATE task SET name = ?, description = ?, due = ?, est_day = ?, "
+        "est_hour = ?, est_min = ?, assigner_id = ?, assign_id = ?, group_id = ? "
+        "WHERE uuid = ?;",
+        (
+            task_name,
+            task_description,
+            task_due,
+            task_est_day,
+            task_est_hour,
+            task_est_min,
+            assigner_id,
+            assign_id,
+            group_id,
+            task_id,
+        ),
+    )
+
+    data_con.commit()
+    data_con.close()
     return True
+
+
+def delete_task(
+    task_id: str,
+) -> None:
+    """This will delete the task."""
+    try:
+        data_con: Connection = check_table()
+        data_cursor: Cursor = data_con.cursor()
+    except Error as e_msg:
+        raise e_msg
+
+    if check_task_exists(data_con, task_id) is False:
+        data_con.close()
+        raise Exception("Task does not exist.")
+
+    data_cursor.execute("DELETE FROM task WHERE uuid = ?;", (task_id,))
+    data_con.commit()
+    data_con.close()
+
+    return
 
 
 def get_user_task(user_id: str) -> dict[str, dict]:
@@ -707,27 +766,6 @@ def uncomplete_task(
         raise Exception("Task does not exist.")
 
     data_cursor.execute("UPDATE task SET completed = 0 WHERE uuid = ?;", (task_id,))
-    data_con.commit()
-    data_con.close()
-
-    return
-
-
-def delete_task(
-    task_id: str,
-) -> None:
-    """This will delete the task."""
-    try:
-        data_con: Connection = check_table()
-        data_cursor: Cursor = data_con.cursor()
-    except Error as e_msg:
-        raise e_msg
-
-    if check_task_exists(data_con, task_id) is False:
-        data_con.close()
-        raise Exception("Task does not exist.")
-
-    data_cursor.execute("DELETE FROM task WHERE uuid = ?;", (task_id,))
     data_con.commit()
     data_con.close()
 

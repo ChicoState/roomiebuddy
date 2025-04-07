@@ -2,12 +2,15 @@
 .env
 .env/
 .env/*
+.venv
+.venv/
+.venv/*
 
 # ignore data db:
 data/
 
 # ignore logs
-logs/
+log/
 
 # ignore .mypy_cache
 .mypy_cache

@@ -8,6 +8,8 @@ from task import (
     add_task,
     add_user,
     login_user,
+    edit_task,
+    delete_task
 )  # edit_task, get_user_task, get_group_task,
 from werkzeug.utils import secure_filename
 
@@ -22,12 +24,13 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
 def allowed_file(filename):
+    """Check if the file is allowed."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @app.route("/")
 def handle_root() -> Response:
-    """Debug Def."""
+    """Sample root endpoint."""
     respose_json: Response = jsonify(
         [
             {
@@ -37,24 +40,6 @@ def handle_root() -> Response:
         ]
     )
     return respose_json
-
-
-"""
-@app.route("/test", methods=["GET", "POST"])
-def handle_test() -> Response:
-    response_json: Response
-    try:
-        print(request.args.get("name1", "name1 does not exist"))
-        print(request.args.get("name2", "name2 does not exist"))
-        print(request.args.get("name3", "name3 does not exist"))
-    except Exception as e:
-        response_json = jsonify([{"message": e}])
-        print(e)
-        return response_json
-    response_json = jsonify([{"message": "success"}])
-
-    return response_json
-"""
 
 
 @app.route("/signup", methods=["POST"])
@@ -136,7 +121,7 @@ def handle_login() -> Response:
 
 @app.route("/add_task", methods=["POST"])
 def handle_add_task() -> Response:
-    """Debug Def."""
+    """Adds a new task to the database."""
     response_json: Response
     if request.method != "POST":
         response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
@@ -204,12 +189,12 @@ def handle_add_task() -> Response:
     return response_json
 
 
-"""
 @app.route("/edit_task", methods=["POST"])
 def handle_edit_task() -> Response:
+    """Edits a task."""
     response_json: Response
     if request.method != "POST":
-        response_json = jsonify([{"message": "Wrong request type"}], success=False)
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
         return response_json
     try:
         json_data: dict = request.get_json()
@@ -233,16 +218,14 @@ def handle_edit_task() -> Response:
         ).timestamp()
     except Exception as e:
         response_json = jsonify(
-            [{"message": e}], status=200, mimetype="application/json"
+            [{"message": f"There was an error! {e}", "error_no": "2"}]
         )
         print(e)
         return response_json
 
     if task_name == "" or assigner_id == "" or assign_id == "":
         response_json = jsonify(
-            [{"message": "Given data is invalid!"}],
-            status=200,
-            mimetype="application/json",
+            [{"message": "Given data is invalid!", "error_no": "3"}]
         )
         return response_json
 
@@ -261,7 +244,7 @@ def handle_edit_task() -> Response:
         )
     except Exception as e:
         response_json = jsonify(
-            [{"message": e}], status=200, mimetype="application/json"
+            [{"message": f"Trouble with backend! Sorry! {e}", "error_no": "2"}]
         )
         print(e)
         return response_json
@@ -269,7 +252,41 @@ def handle_edit_task() -> Response:
     response_json = jsonify([{"message": "success"}])
 
     return response_json
-"""
+
+
+@app.route("/delete_task", methods=["POST"])
+def handle_delete_task() -> Response:
+    """Delete a task."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    try:
+        task_id: str = request.form.get("task_id", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("delete_task", e)
+        return response_json
+
+    if task_id == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+
+    try:
+        delete_task(task_id=task_id)
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("delete_task", e)
+        return response_json
+
+    response_json = jsonify([{"error_no": "0", "message": "success"}])
+    return response_json
 
 
 if __name__ == "__main__":
