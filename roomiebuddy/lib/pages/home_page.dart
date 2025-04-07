@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:get/get.dart';
+import '../common/widget/appbar/appbar.dart';
 import '../containers/primary_header_container.dart';
 
 class HomePage extends StatefulWidget {
@@ -11,49 +13,45 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String _selectedCategory = 'Today'; // Tracks selected category
-  bool _isLoading = false; // Loading state to show a loading spinner
-  List<Map<String, dynamic>> _tasks = []; // Store tasks as a list of maps
+  String _selectedCategory = 'Today';
+  bool _isLoading = false;
+  List<Map<String, dynamic>> _tasks = [];
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    fetchTasks(); // Fetch tasks when the page loads
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Re-fetch tasks when the screen is resumed
     fetchTasks();
   }
 
-  // Fetch tasks from the API
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return "Good Morning";
+    } else if (hour < 18) {
+      return "Good Afternoon";
+    } else {
+      return "Good Evening";
+    }
+  }
+
   Future<void> fetchTasks() async {
-    if (!mounted) return; // Ensure the widget is still mounted before updating the state
+    if (!mounted) return;
     setState(() {
-      _isLoading = true; // Show loading spinner while fetching
+      _isLoading = true;
     });
 
-    print("Fetching Tasks.....");
-
     try {
-
       final response = await http.post(
         Uri.parse('http://10.0.2.2:5000/get_task'),
-        headers: {'Content-Type': 'application/json'}, // Ensure correct headers
-        body: jsonEncode({'category': _selectedCategory}), // Convert map to JSON string
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'category': _selectedCategory}),
       );
 
-      print("Response Status: ${response.statusCode}");
-
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body); // Decode response body
-        print("Response Data: $data");
-
+        final Map<String, dynamic> data = jsonDecode(response.body);
         if (data.containsKey("message") && data["message"] == "success") {
-          data.remove("message"); // Remove success message
-
+          data.remove("message");
           if (mounted) {
             setState(() {
               _tasks = data.entries.map((e) {
@@ -65,13 +63,11 @@ class _HomePageState extends State<HomePage> {
                 };
               }).toList();
             });
-            print("Tasks Loaded: $_tasks");
           }
         } else {
           throw Exception('Unexpected data format');
         }
       } else {
-        print('Server Error: ${response.statusCode}');
         throw Exception('Failed to load tasks');
       }
     } catch (e) {
@@ -79,7 +75,7 @@ class _HomePageState extends State<HomePage> {
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false; // Hide loading spinner
+          _isLoading = false;
         });
       }
     }
@@ -87,89 +83,78 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home Page'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: fetchTasks, // Reload tasks when pressed
-            tooltip: 'Reload Tasks',
+    String userName = "Naruto";
+    String? profileImagePath;
+
+    return SafeArea(
+      child: Scaffold(
+        appBar: TAppBar(
+          title: Row(
+            children: [
+              if (profileImagePath != null)
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey, width: 2),
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      //Hi
+                      profileImagePath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Icon(Icons.person, size: 30, color: Colors.grey),
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey, width: 2),
+                  ),
+                  child: Icon(Icons.person, size: 30, color: Colors.grey),
+                ),
+              const SizedBox(width: 10),
+              Text("${_getGreeting()}, $userName", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TPrimaryHeaderContainer(child: Container()),
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'My Tasks',
-                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-              ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.search),
+              onPressed: () {
+                showSearch(context: context, delegate: TaskSearchDelegate(tasks: _tasks));
+              },
             ),
-            _buildTaskCategories(),
-            _buildGroupSection(),
-            _isLoading
-                ? const Center(child: CircularProgressIndicator()) // Show loading spinner
-                : displayTasks(), // Display the tasks
           ],
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TPrimaryHeaderContainer(child: Container()),
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'My Tasks',
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                ),
+              ),
+              _isLoading ? const Center(child: CircularProgressIndicator()) : displayTasks(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // Task category selector with oval design
-  Widget _buildTaskCategories() {
-    final categories = ['Today', 'Upcoming', 'Completed'];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: categories.map((title) {
-          bool isSelected = _selectedCategory == title;
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedCategory = title;
-              });
-              fetchTasks(); // Fetch tasks when the category is changed
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.green : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.green),
-              ),
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? Colors.white : Colors.green,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  // Placeholder for Group Section (can be filled later)
-  Widget _buildGroupSection() {
-    return Container(); // Empty for now
-  }
-
-  // Display tasks fetched from the API
   Widget displayTasks() {
     return ListView.builder(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(), // Prevent scrolling conflicts
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: _tasks.length,
       itemBuilder: (context, index) {
         final task = _tasks[index];
@@ -186,5 +171,56 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
+  }
+}
+
+class TaskSearchDelegate extends SearchDelegate {
+  final List<Map<String, dynamic>> tasks;
+
+  TaskSearchDelegate({required this.tasks});
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    List<Map<String, dynamic>> filteredTasks = tasks.where((task) {
+      return task['taskName'].toLowerCase().contains(query.toLowerCase());
+    }).toList();
+
+    return ListView.builder(
+      itemCount: filteredTasks.length,
+      itemBuilder: (context, index) {
+        final task = filteredTasks[index];
+        return ListTile(
+          title: Text(task['taskName']),
+          subtitle: Text('Assigned by: ${task['assignedBy']}'),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return buildResults(context);
   }
 }
