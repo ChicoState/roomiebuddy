@@ -10,8 +10,8 @@ CREATE_TASK_TABLE: str = (
     "(uuid TEXT PRIMARY KEY, name TEXT NOT NULL, "
     "description TEXT, due REAL, "
     "est_day INT, est_hour INT, "
-    "est_min INT, assigner_uuid TEXT, "
-    "assign_uuid TEXT, group_uuid TEXT, "
+    "est_min INT, assigner_uuid TEXT NOT NULL, "
+    "assign_uuid TEXT NOT NULL, group_uuid TEXT NOT NULL, "
     "completed INT NOT NULL, priority INT, "
     "recursive INT, image_path TEXT);"
 )
@@ -79,6 +79,9 @@ def test_task() -> None:
         assigner_id="0",
         assign_id="0",
         group_id="0",
+        recursive=0,
+        priority=0,
+        image_path="",
     )
     print("test1 done")
 
@@ -93,6 +96,9 @@ def test_task() -> None:
         assigner_id="0",
         assign_id="0",
         group_id="0",
+        recursive=0,
+        priority=0,
+        image_path="",
     )
     print("test2 done")
 
@@ -122,7 +128,7 @@ def check_table() -> Connection:
     data_cursor.execute(CREATE_GROUP_USER_TABLE)
 
     if (
-        len(data_cursor.execute("SELECT * FROM task;").description) != 11
+        len(data_cursor.execute("SELECT * FROM task;").description) != 14
         or len(data_cursor.execute("SELECT * FROM user;").description) != 4
         or len(data_cursor.execute("SELECT * FROM group;").description) != 4
         or len(data_cursor.execute("SELECT * FROM group_user;").description) != 2
@@ -172,15 +178,15 @@ def check_user_in_group(data_con: Connection, user_id: str, group_id: str) -> bo
     return True
 
 
-def check_id_exists(data_con: Connection, data_table: str, id: str):
+def check_id_exists(data_con: Connection, data_table: str, given_id: str) -> bool:
     """Checks if id is not in use."""
     data_cursor: Cursor = data_con.cursor()
     if data_table == "task":
-        data_cursor.execute("SELECT * FROM task WHERE uuid = ?;", (id,))
+        data_cursor.execute("SELECT * FROM task WHERE uuid = ?;", (given_id,))
     elif data_table == "user":
-        data_cursor.execute("SELECT * FROM user WHERE uuid = ?;", (id,))
+        data_cursor.execute("SELECT * FROM user WHERE uuid = ?;", (given_id,))
     elif data_table == "group":
-        data_cursor.execute("SELECT * FROM group WHERE uuid = ?;", (id,))
+        data_cursor.execute("SELECT * FROM group WHERE uuid = ?;", (given_id,))
     if len(data_cursor.fetchall()) == 0:
         return False
     return True
@@ -190,7 +196,7 @@ def add_user(
     username: str,
     email: str,
     password: str,
-):
+) -> str:
     """This will add a user."""
     try:
         data_con: Connection = check_table()
@@ -220,7 +226,36 @@ def add_user(
 
     data_con.commit()
     data_con.close()
-    return
+    return user_id
+
+
+def login_user(
+    email: str,
+    password: str,
+) -> str:
+    """This will login a user."""
+    try:
+        data_con: Connection = check_table()
+        data_cursor: Cursor = data_con.cursor()
+    except Error as e_msg:
+        raise e_msg
+
+    data_cursor.execute(
+        "SELECT * FROM user WHERE email = ? AND password = ?;",
+        (email, password),
+    )
+    if len(data_cursor.fetchall()) == 0:
+        data_con.close()
+        raise Exception("Email or Password is incorrect.")
+
+    data_cursor.execute(
+        "SELECT uuid FROM user WHERE email = ?;",
+        (email,),
+    )
+    user_id: str = data_cursor.fetchone()[0]
+    data_con.close()
+
+    return user_id
 
 
 def edit_user(
@@ -449,6 +484,9 @@ def add_task(
     assigner_id: str,
     assign_id: str,
     group_id: str,
+    recursive: int,
+    priority: int,
+    image_path: str,
 ) -> None:
     """This will add the task."""
 
@@ -471,7 +509,7 @@ def add_task(
         task_id = str(uuid4())
 
     data_cursor.execute(
-        "INSERT INTO task VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0);",
+        "INSERT INTO task VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
         (
             task_id,
             task_name,
@@ -483,6 +521,10 @@ def add_task(
             assigner_id,
             assign_id,
             group_id,
+            0,  # completed = 0
+            priority,
+            recursive,
+            image_path,
         ),
     )
 
@@ -503,6 +545,7 @@ def edit_task(
     assign_id: str,
     group_id: str,
 ) -> bool:
+    """This will edit the task."""
     return True
 
 
