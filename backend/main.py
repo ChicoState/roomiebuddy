@@ -161,10 +161,10 @@ def handle_add_task() -> Response:
         recursive: int = int(request.form.get("recursive", "0"))
         priority: int = int(request.form.get("priority", "0"))
 
-        imageFile = request.files.get("image", None)
-        if imageFile and imageFile.filename != "":
-            fileName: str = secure_filename(imageFile.filename)
-            imageFile.save(join(app.config["UPLOAD_FOLDER"], fileName))
+        image_file = request.files.get("image", None)
+        if image_file and image_file.filename != "":
+            file_name: str = secure_filename(image_file.filename)
+            image_file.save(join(app.config["UPLOAD_FOLDER"], file_name))
     except Exception as e:
         response_json = jsonify(
             [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
@@ -191,7 +191,7 @@ def handle_add_task() -> Response:
             group_id=group_id,
             recursive=recursive,
             priority=priority,
-            image_path=fileName,
+            image_path=file_name,
         )
     except Exception as e:
         response_json = jsonify(

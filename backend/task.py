@@ -81,7 +81,7 @@ def test_task() -> None:
         group_id="0",
         recursive=0,
         priority=0,
-        image_path=""
+        image_path="",
     )
     print("test1 done")
 
@@ -98,7 +98,7 @@ def test_task() -> None:
         group_id="0",
         recursive=0,
         priority=0,
-        image_path=""
+        image_path="",
     )
     print("test2 done")
 
@@ -178,15 +178,15 @@ def check_user_in_group(data_con: Connection, user_id: str, group_id: str) -> bo
     return True
 
 
-def check_id_exists(data_con: Connection, data_table: str, id: str) -> bool:
+def check_id_exists(data_con: Connection, data_table: str, given_id: str) -> bool:
     """Checks if id is not in use."""
     data_cursor: Cursor = data_con.cursor()
     if data_table == "task":
-        data_cursor.execute("SELECT * FROM task WHERE uuid = ?;", (id,))
+        data_cursor.execute("SELECT * FROM task WHERE uuid = ?;", (given_id,))
     elif data_table == "user":
-        data_cursor.execute("SELECT * FROM user WHERE uuid = ?;", (id,))
+        data_cursor.execute("SELECT * FROM user WHERE uuid = ?;", (given_id,))
     elif data_table == "group":
-        data_cursor.execute("SELECT * FROM group WHERE uuid = ?;", (id,))
+        data_cursor.execute("SELECT * FROM group WHERE uuid = ?;", (given_id,))
     if len(data_cursor.fetchall()) == 0:
         return False
     return True
@@ -524,7 +524,7 @@ def add_task(
             0,  # completed = 0
             priority,
             recursive,
-            image_path
+            image_path,
         ),
     )
 
@@ -545,6 +545,7 @@ def edit_task(
     assign_id: str,
     group_id: str,
 ) -> bool:
+    """This will edit the task."""
     return True
 
 
