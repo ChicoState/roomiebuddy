@@ -103,7 +103,7 @@ def test_task() -> None:
     print("test2 done")
 
     print("test get")
-    data = get_user_task("0")
+    data = get_user_task("0", "0")
     print(data)
     print("test get done")
 
@@ -187,6 +187,18 @@ def check_id_exists(data_con: Connection, data_table: str, given_id: str) -> boo
         data_cursor.execute("SELECT * FROM user WHERE uuid = ?;", (given_id,))
     elif data_table == "group":
         data_cursor.execute("SELECT * FROM group WHERE uuid = ?;", (given_id,))
+    if len(data_cursor.fetchall()) == 0:
+        return False
+    return True
+
+
+def check_password(data_con: Connection, user_id: str, password: str) -> bool:
+    """Checks if password is correct."""
+    data_cursor: Cursor = data_con.cursor()
+    data_cursor.execute(
+        "SELECT * FROM user WHERE uuid = ? AND password = ?;",
+        (user_id, password),
+    )
     if len(data_cursor.fetchall()) == 0:
         return False
     return True
@@ -487,6 +499,7 @@ def add_task(
     recursive: int,
     priority: int,
     image_path: str,
+    password: str = "",
 ) -> None:
     """This will add the task."""
 
@@ -503,6 +516,10 @@ def add_task(
     ):
         data_con.close()
         raise Exception("User or Group does not exist.")
+
+    if check_password(data_con, assigner_id, password) is False:
+        data_con.close()
+        raise Exception("Password is incorrect.")
 
     task_id: str = str(uuid4())
     while check_id_exists(data_con, "task", task_id):
@@ -544,6 +561,7 @@ def edit_task(
     assigner_id: str,
     assign_id: str,
     group_id: str,
+    password: str
 ) -> bool:
     """This will edit the task."""
     try:
@@ -563,6 +581,10 @@ def edit_task(
     ):
         data_con.close()
         raise Exception("User or Group does not exist.")
+
+    if check_password(data_con, assigner_id, password) is False:
+        data_con.close()
+        raise Exception("Password is incorrect.")
 
     data_cursor.execute(
         "UPDATE task SET name = ?, description = ?, due = ?, est_day = ?, "
@@ -588,7 +610,9 @@ def edit_task(
 
 
 def delete_task(
+    user_id: str,
     task_id: str,
+    password: str,
 ) -> None:
     """This will delete the task."""
     try:
@@ -601,6 +625,10 @@ def delete_task(
         data_con.close()
         raise Exception("Task does not exist.")
 
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise Exception("Password is incorrect.")
+
     data_cursor.execute("DELETE FROM task WHERE uuid = ?;", (task_id,))
     data_con.commit()
     data_con.close()
@@ -608,7 +636,7 @@ def delete_task(
     return
 
 
-def get_user_task(user_id: str) -> dict[str, dict]:
+def get_user_task(user_id: str, password: str) -> dict[str, dict]:
     """This will get the task from the user."""
     try:
         data_con: Connection = check_table()
@@ -619,6 +647,10 @@ def get_user_task(user_id: str) -> dict[str, dict]:
     if check_user_exists(data_con, user_id) is False:
         data_con.close()
         raise Exception("User does not exist.")
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise Exception("Password is incorrect.")
 
     data_cursor.execute("SELECT * FROM task WHERE assign_id = ?;", (user_id,))
 
