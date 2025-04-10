@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import '../common/widget/appbar/appbar.dart';
 import '../containers/primary_header_container.dart';
+import '../providers/theme_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  HomePageState createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  String _selectedCategory = 'Today';
+class HomePageState extends State<HomePage> {
+  final String _selectedCategory = 'Today';
   bool _isLoading = false;
   List<Map<String, dynamic>> _tasks = [];
   TextEditingController _searchController = TextEditingController();
@@ -119,12 +120,12 @@ class _HomePageState extends State<HomePage> {
                   child: Icon(Icons.person, size: 30, color: Colors.grey),
                 ),
               const SizedBox(width: 10),
-              Text("${_getGreeting()}, $userName", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+              Text("${_getGreeting()}, $userName", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             ],
           ),
           actions: [
             IconButton(
-              icon: Icon(Icons.search),
+              icon: const Icon(Icons.search),
               onPressed: () {
                 showSearch(context: context, delegate: TaskSearchDelegate(tasks: _tasks));
               },
@@ -152,6 +153,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget displayTasks() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -165,7 +168,7 @@ class _HomePageState extends State<HomePage> {
             subtitle: Text('Assigned by: ${task['assignedBy']}'),
             trailing: Text(
               task['priority'],
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: themeProvider.errorColor),
             ),
           ),
         );
@@ -183,7 +186,7 @@ class TaskSearchDelegate extends SearchDelegate {
   List<Widget> buildActions(BuildContext context) {
     return [
       IconButton(
-        icon: Icon(Icons.clear),
+        icon: const Icon(Icons.clear),
         onPressed: () {
           query = '';
         },
@@ -194,7 +197,7 @@ class TaskSearchDelegate extends SearchDelegate {
   @override
   Widget buildLeading(BuildContext context) {
     return IconButton(
-      icon: Icon(Icons.arrow_back),
+      icon: const Icon(Icons.arrow_back),
       onPressed: () {
         close(context, null);
       },
