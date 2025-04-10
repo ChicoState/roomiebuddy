@@ -21,7 +21,7 @@ CREATE_USER_TABLE: str = (
     "email TEXT NOT NULL, password TEXT NOT NULL);"
 )
 CREATE_GROUP_TABLE: str = (
-    "CREATE TABLE IF NOT EXISTS group"
+    "CREATE TABLE IF NOT EXISTS task_group"
     "(uuid TEXT PRIMARY KEY, name TEXT NOT NULL, "
     "description TEXT, owner_id INT NOT NULL);"
 )
@@ -36,81 +36,6 @@ CREATE_GROUP_ROLES_TABLE: str = (
     "role_name TEXT NOT NULL, role_description TEXT, "
     "role_permissions TEXT, admin INT NOT NULL);"
 )
-
-
-def delete_everything() -> None:
-    """This will delete everything in the task table. DANGER!"""
-
-    try:
-        data_con: Connection = check_table()
-        data_cursor: Cursor = data_con.cursor()
-    except Error as e_msg:
-        raise e_msg
-
-    data_cursor.execute("DELETE FROM task;")
-    data_cursor.execute("DELETE FROM user;")
-    data_cursor.execute("DELETE FROM group;")
-    data_cursor.execute("DELETE FROM group_user;")
-    data_con.commit()
-    data_con.close()
-    return
-
-
-def test_task() -> None:
-    """This will test the task table."""
-
-    try:
-        data_con: Connection = check_table()
-        data_con.close()
-    except Error as e_msg:
-        raise e_msg
-
-    # DANGER! MAKE SURE TO COMMENT THIS OUT ON REAL USE!
-    delete_everything()
-
-    print("test1")
-    add_task(
-        task_name="Test Task",
-        task_description="This is a test task.",
-        task_due=0,
-        task_est_day=0,
-        task_est_hour=0,
-        task_est_min=0,
-        assigner_id="0",
-        assign_id="0",
-        group_id="0",
-        recursive=0,
-        priority=0,
-        image_path="",
-    )
-    print("test1 done")
-
-    print("test2")
-    add_task(
-        task_name="Test Task 2",
-        task_description="This is a test task.",
-        task_due=0,
-        task_est_day=0,
-        task_est_hour=0,
-        task_est_min=0,
-        assigner_id="0",
-        assign_id="0",
-        group_id="0",
-        recursive=0,
-        priority=0,
-        image_path="",
-    )
-    print("test2 done")
-
-    print("test get")
-    data = get_user_task("0")
-    print(data)
-    print("test get done")
-
-    return
-
-
-# ----------------- #
 
 
 def check_table() -> Connection:
@@ -130,7 +55,7 @@ def check_table() -> Connection:
     if (
         len(data_cursor.execute("SELECT * FROM task;").description) != 14
         or len(data_cursor.execute("SELECT * FROM user;").description) != 4
-        or len(data_cursor.execute("SELECT * FROM group;").description) != 4
+        or len(data_cursor.execute("SELECT * FROM task_group;").description) != 4
         or len(data_cursor.execute("SELECT * FROM group_user;").description) != 2
     ):
         data_con.close()
@@ -151,7 +76,7 @@ def check_user_exists(data_con: Connection, user_id: str) -> bool:
 def check_group_exists(data_con: Connection, group_id: str) -> bool:
     """This will check if the group exists."""
     data_cursor: Cursor = data_con.cursor()
-    data_cursor.execute("SELECT * FROM group WHERE uuid = ?;", (group_id,))
+    data_cursor.execute("SELECT * FROM task_group WHERE uuid = ?;", (group_id,))
     if len(data_cursor.fetchall()) == 0:
         return False
     return True
@@ -186,7 +111,19 @@ def check_id_exists(data_con: Connection, data_table: str, given_id: str) -> boo
     elif data_table == "user":
         data_cursor.execute("SELECT * FROM user WHERE uuid = ?;", (given_id,))
     elif data_table == "group":
-        data_cursor.execute("SELECT * FROM group WHERE uuid = ?;", (given_id,))
+        data_cursor.execute("SELECT * FROM task_group WHERE uuid = ?;", (given_id,))
+    if len(data_cursor.fetchall()) == 0:
+        return False
+    return True
+
+
+def check_password(data_con: Connection, user_id: str, password: str) -> bool:
+    """Checks if password is correct."""
+    data_cursor: Cursor = data_con.cursor()
+    data_cursor.execute(
+        "SELECT * FROM user WHERE uuid = ? AND password = ?;",
+        (user_id, password),
+    )
     if len(data_cursor.fetchall()) == 0:
         return False
     return True
@@ -325,7 +262,7 @@ def delete_user(
     # Potential BUggy Behavior CAREFUL
 
     # data_cursor.execute(
-    #     "SELECT FROM group WHERE owner_id = ?;",
+    #     "SELECT FROM task_group WHERE owner_id = ?;",
     #     (user_id,),
     # )
 
@@ -453,7 +390,7 @@ def delete_group(
         raise Exception("User does not exist.")
 
     data_cursor.execute(
-        "SELECT * FROM group WHERE uuid = ? AND owner_id = ?;",
+        "SELECT * FROM task_group WHERE uuid = ? AND owner_id = ?;",
         (group_id, user_id),
     )
 
@@ -462,7 +399,7 @@ def delete_group(
         raise Exception("User does not own the group.")
 
     data_cursor.execute(
-        "DELETE FROM group WHERE uuid = ?;",
+        "DELETE FROM task_group WHERE uuid = ?;",
         (group_id,),
     )
 
@@ -472,6 +409,43 @@ def delete_group(
     )
 
     return
+
+
+def get_group(
+    user_id: str,
+    password: str,
+) -> dict[str, dict]:
+    """This will get the group from the user."""
+    try:
+        data_con: Connection = check_table()
+        data_cursor: Cursor = data_con.cursor()
+    except Error as e_msg:
+        raise e_msg
+
+    if check_user_exists(data_con, user_id) is False:
+        data_con.close()
+        raise Exception("User does not exist.")
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise Exception("Password is incorrect.")
+
+    data_cursor.execute(
+        "SELECT * FROM group_user WHERE user_id = ?;",
+        (user_id,),
+    )
+
+    group_list: list[tuple] = data_cursor.fetchall()
+    new_group_list: dict[str, dict] = {}
+    for group in group_list:
+        new_group_list[group[0]] = {
+            "group_id": group[0],
+            "user_id": group[1],
+            "role_id": group[2],
+        }
+    data_con.close()
+
+    return new_group_list
 
 
 def add_task(
@@ -487,6 +461,7 @@ def add_task(
     recursive: int,
     priority: int,
     image_path: str,
+    password: str = "",
 ) -> None:
     """This will add the task."""
 
@@ -503,6 +478,10 @@ def add_task(
     ):
         data_con.close()
         raise Exception("User or Group does not exist.")
+
+    if check_password(data_con, assigner_id, password) is False:
+        data_con.close()
+        raise Exception("Password is incorrect.")
 
     task_id: str = str(uuid4())
     while check_id_exists(data_con, "task", task_id):
@@ -544,6 +523,7 @@ def edit_task(
     assigner_id: str,
     assign_id: str,
     group_id: str,
+    password: str
 ) -> bool:
     """This will edit the task."""
     try:
@@ -563,6 +543,10 @@ def edit_task(
     ):
         data_con.close()
         raise Exception("User or Group does not exist.")
+
+    if check_password(data_con, assigner_id, password) is False:
+        data_con.close()
+        raise Exception("Password is incorrect.")
 
     data_cursor.execute(
         "UPDATE task SET name = ?, description = ?, due = ?, est_day = ?, "
@@ -588,7 +572,9 @@ def edit_task(
 
 
 def delete_task(
+    user_id: str,
     task_id: str,
+    password: str,
 ) -> None:
     """This will delete the task."""
     try:
@@ -601,6 +587,10 @@ def delete_task(
         data_con.close()
         raise Exception("Task does not exist.")
 
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise Exception("Password is incorrect.")
+
     data_cursor.execute("DELETE FROM task WHERE uuid = ?;", (task_id,))
     data_con.commit()
     data_con.close()
@@ -608,7 +598,7 @@ def delete_task(
     return
 
 
-def get_user_task(user_id: str) -> dict[str, dict]:
+def get_user_task(user_id: str, password: str) -> dict[str, dict]:
     """This will get the task from the user."""
     try:
         data_con: Connection = check_table()
@@ -619,6 +609,10 @@ def get_user_task(user_id: str) -> dict[str, dict]:
     if check_user_exists(data_con, user_id) is False:
         data_con.close()
         raise Exception("User does not exist.")
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise Exception("Password is incorrect.")
 
     data_cursor.execute("SELECT * FROM task WHERE assign_id = ?;", (user_id,))
 
@@ -773,5 +767,4 @@ def uncomplete_task(
 
 
 if __name__ == "__main__":
-    test_task()
     print("This is a 'task_editor' module, please run 'main.py'. Exiting...")

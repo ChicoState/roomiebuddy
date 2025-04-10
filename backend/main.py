@@ -9,7 +9,9 @@ from task import (
     add_user,
     login_user,
     edit_task,
-    delete_task
+    delete_task,
+    get_user_task,
+    get_group
 )  # edit_task, get_user_task, get_group_task,
 from werkzeug.utils import secure_filename
 
@@ -145,6 +147,7 @@ def handle_add_task() -> Response:
         ).timestamp()
         recursive: int = int(request.form.get("recursive", "0"))
         priority: int = int(request.form.get("priority", "0"))
+        password: str = request.form.get("password", "")
 
         image_file = request.files.get("image", None)
         if image_file and image_file.filename != "":
@@ -177,6 +180,7 @@ def handle_add_task() -> Response:
             recursive=recursive,
             priority=priority,
             image_path=file_name,
+            password=password,
         )
     except Exception as e:
         response_json = jsonify(
@@ -197,21 +201,21 @@ def handle_edit_task() -> Response:
         response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
         return response_json
     try:
-        json_data: dict = request.get_json()
-        task_id: str = json_data["task_id"]
-        task_name: str = json_data["task_name"]
-        task_description: str = json_data["task_description"]
-        task_due_year: int = int(json_data["task_due_year"])
-        task_due_month: int = int(json_data["task_due_month"])
-        task_due_date: int = int(json_data["task_due_date"])
-        task_due_hour: int = int(json_data["task_due_hour"])
-        task_due_min: int = int(json_data["task_due_min"])
-        task_est_day: int = int(json_data["task_est_day"])
-        task_est_hour: int = int(json_data["task_est_hour"])
-        task_est_min: int = int(json_data["task_est_min"])
-        assigner_id: str = json_data["assigner_id"]
-        assign_id: str = json_data["assign_id"]
-        group_id: str = json_data["group_id"]
+        task_id: str = request.form.get("task_id", "")
+        task_name: str = request.form.get("task_name", "")
+        task_description: str = request.form.get("task_description", "")
+        task_due_year: int = int(request.form.get("task_due_year", "0"))
+        task_due_month: int = int(request.form.get("task_due_month", "0"))
+        task_due_date: int = int(request.form.get("task_due_date", "0"))
+        task_due_hour: int = int(request.form.get("task_due_hour", "0"))
+        task_due_min: int = int(request.form.get("task_due_min", "0"))
+        task_est_day: int = int(request.form.get("task_est_day", "0"))
+        task_est_hour: int = int(request.form.get("task_est_hour", "0"))
+        task_est_min: int = int(request.form.get("task_est_min", "0"))
+        assigner_id: str = request.form.get("assigner_id", "")
+        assign_id: str = request.form.get("assign_id", "")
+        group_id: str = request.form.get("group_id", "")
+        password: str = request.form.get("password", "")
 
         task_due: float = datetime(
             task_due_year, task_due_month, task_due_date, task_due_hour, task_due_min, 0
@@ -241,6 +245,7 @@ def handle_edit_task() -> Response:
             assigner_id=assigner_id,
             assign_id=assign_id,
             group_id=group_id,
+            password=password,
         )
     except Exception as e:
         response_json = jsonify(
@@ -263,6 +268,8 @@ def handle_delete_task() -> Response:
         return response_json
     try:
         task_id: str = request.form.get("task_id", "")
+        user_id: str = request.form.get("user_id", "")
+        password: str = request.form.get("password", "")
     except Exception as e:
         response_json = jsonify(
             [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
@@ -277,7 +284,11 @@ def handle_delete_task() -> Response:
         return response_json
 
     try:
-        delete_task(task_id=task_id)
+        delete_task(
+            user_id=user_id,
+            task_id=task_id,
+            password=password,
+        )
     except Exception as e:
         response_json = jsonify(
             [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
@@ -289,8 +300,83 @@ def handle_delete_task() -> Response:
     return response_json
 
 
+@app.route("/get_user_task", methods=["POST"])
+def handle_get_user_task() -> Response:
+    """Get all tasks for a user."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    try:
+        user_id: str = request.form.get("user_id", "")
+        password: str = request.form.get("password", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("get_user_task", e)
+        return response_json
+
+    if user_id == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+
+    try:
+        tasks: dict[str, dict] = get_user_task(
+            user_id=user_id,
+            password=password
+        )
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("get_user_task", e)
+        return response_json
+
+    response_json = jsonify([{"error_no": "0", "message": tasks}])
+    return response_json
+
+
+@app.route("/get_group_list", methods=["POST"])
+def handle_get_group_list() -> Response:
+    """Get all groups for a user."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    try:
+        user_id: str = request.form.get("user_id", "")
+        password: str = request.form.get("password", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("get_user_task", e)
+        return response_json
+
+    if user_id == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+
+    try:
+        groups: dict[str, dict] = get_group(user_id=user_id, password=password)
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("get_user_task", e)
+        return response_json
+    response_json = jsonify([{"error_no": "0", "message": groups}])
+    return response_json
+
+
 if __name__ == "__main__":
     print("Running main.py")
+    make_new_log("main", "Server started")  # type: ignore
     # run(test_data())
     try:
         print("Setting Up the Server...")
