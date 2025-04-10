@@ -44,9 +44,13 @@ class HomePageState extends State<HomePage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:5000/get_task'),
+        Uri.parse('http://10.0.2.2:5000/get_user_task'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'category': _selectedCategory}),
+        body: jsonEncode({
+          'category': _selectedCategory,
+          'user_id': "dummy_id",
+          "password": "dummy_password"
+          }),
       );
 
       if (response.statusCode == 200) {
