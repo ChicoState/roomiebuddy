@@ -176,6 +176,11 @@ class _AddTaskpageState extends State<AddTaskpage> {
                       body: jsonEncode(<String, String>{
                         'task_name': _titleController.text,
                         'task_description' : _descriptionController.text,
+                        'assigner_id' : 'dummy_id',
+                        'assign_id': 'dummy_id',
+                        'group_id': '0',
+                        'password': 'dummy_password',
+                        'task_due_year' : '2025',
                       }),
                   );
                 },
