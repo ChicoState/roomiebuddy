@@ -27,7 +27,7 @@ CREATE_GROUP_TABLE: str = (
 )
 CREATE_GROUP_USER_TABLE: str = (
     "CREATE TABLE IF NOT EXISTS group_user"
-    "(group_id TEXT NOT NULL, user_id TEXT NOT NULL "
+    "(group_id TEXT NOT NULL, user_id TEXT NOT NULL, "
     "role_id TEXT);"
 )
 CREATE_GROUP_ROLES_TABLE: str = (
@@ -56,7 +56,7 @@ def check_table() -> Connection:
         len(data_cursor.execute("SELECT * FROM task;").description) != 14
         or len(data_cursor.execute("SELECT * FROM user;").description) != 4
         or len(data_cursor.execute("SELECT * FROM task_group;").description) != 4
-        or len(data_cursor.execute("SELECT * FROM group_user;").description) != 2
+        or len(data_cursor.execute("SELECT * FROM group_user;").description) != 3
     ):
         data_con.close()
         raise Exception("User Database has not been configured successfully.")
@@ -255,7 +255,7 @@ def delete_user(
     )
 
     data_cursor.execute(
-        "DELETE FROM task WHERE assigner_id = ? OR assign_id = ?;",
+        "DELETE FROM task WHERE assigner_uuid = ? OR assign_uuid = ?;",
         (user_id, user_id),
     )
 
@@ -474,7 +474,7 @@ def add_task(
     if (
         check_user_exists(data_con, assigner_id) is False
         or check_user_exists(data_con, assign_id) is False
-        or (group_id != "" and check_group_exists(data_con, group_id) is False)
+        or (group_id != "0" and check_group_exists(data_con, group_id) is False)
     ):
         data_con.close()
         raise Exception("User or Group does not exist.")
@@ -539,7 +539,7 @@ def edit_task(
     if (
         check_user_exists(data_con, assigner_id) is False
         or check_user_exists(data_con, assign_id) is False
-        or (group_id != "" and check_group_exists(data_con, group_id) is False)
+        or (group_id != "0" and check_group_exists(data_con, group_id) is False)
     ):
         data_con.close()
         raise Exception("User or Group does not exist.")
@@ -550,7 +550,7 @@ def edit_task(
 
     data_cursor.execute(
         "UPDATE task SET name = ?, description = ?, due = ?, est_day = ?, "
-        "est_hour = ?, est_min = ?, assigner_id = ?, assign_id = ?, group_id = ? "
+        "est_hour = ?, est_min = ?, assigner_uuid = ?, assign_uuid = ?, group_id = ? "
         "WHERE uuid = ?;",
         (
             task_name,
@@ -614,7 +614,7 @@ def get_user_task(user_id: str, password: str) -> dict[str, dict]:
         data_con.close()
         raise Exception("Password is incorrect.")
 
-    data_cursor.execute("SELECT * FROM task WHERE assign_id = ?;", (user_id,))
+    data_cursor.execute("SELECT * FROM task WHERE assign_uuid = ?;", (user_id,))
 
     task_list: list[tuple] = data_cursor.fetchall()
     new_task_list: dict[str, dict] = {}
@@ -632,6 +632,8 @@ def get_user_task(user_id: str, password: str) -> dict[str, dict]:
             "completed": bool(task[10]),
         }
     data_con.close()
+
+    # print(new_task_list)
 
     return new_task_list
 
