@@ -10,7 +10,8 @@ from task import (
     login_user,
     edit_task,
     delete_task,
-    get_user_task
+    get_user_task,
+    get_group
 )  # edit_task, get_user_task, get_group_task,
 from werkzeug.utils import secure_filename
 
@@ -335,6 +336,41 @@ def handle_get_user_task() -> Response:
         return response_json
 
     response_json = jsonify([{"error_no": "0", "message": tasks}])
+    return response_json
+
+
+@app.route("/get_group_list", methods=["POST"])
+def handle_get_group_list() -> Response:
+    """Get all groups for a user."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    try:
+        user_id: str = request.form.get("user_id", "")
+        password: str = request.form.get("password", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("get_user_task", e)
+        return response_json
+
+    if user_id == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+
+    try:
+        groups: dict[str, dict] = get_group(user_id=user_id, password=password)
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("get_user_task", e)
+        return response_json
+    response_json = jsonify([{"error_no": "0", "message": groups}])
     return response_json
 
 
