@@ -52,9 +52,10 @@ def handle_signup() -> Response:
         response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
         return response_json
     try:
-        username: str = request.form.get("username", "")
-        email: str = request.form.get("email", "")
-        password: str = request.form.get("password", "")
+        request_data: dict = request.get_json()
+        username: str = request_data.get("username", "")
+        email: str = request_data.get("email", "")
+        password: str = request_data.get("password", "")
     except Exception as e:
         response_json = jsonify(
             [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
@@ -91,8 +92,9 @@ def handle_login() -> Response:
         response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
         return response_json
     try:
-        email: str = request.form.get("email", "")
-        password: str = request.form.get("password", "")
+        request_data: dict = request.get_json()
+        email: str = request_data.get("email", "")
+        password: str = request_data.get("password", "")
     except Exception as e:
         response_json = jsonify(
             [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
@@ -129,30 +131,32 @@ def handle_add_task() -> Response:
         response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
         return response_json
     try:
-        task_name: str = request.form.get("task_name", "")
-        task_description: str = request.form.get("task_description", "")
-        task_due_year: int = int(request.form.get("task_due_year", "0"))
-        task_due_month: int = int(request.form.get("task_due_month", "0"))
-        task_due_date: int = int(request.form.get("task_due_date", "0"))
-        task_due_hour: int = int(request.form.get("task_due_hour", "0"))
-        task_due_min: int = int(request.form.get("task_due_min", "0"))
-        task_est_day: int = int(request.form.get("task_est_day", "0"))
-        task_est_hour: int = int(request.form.get("task_est_hour", "0"))
-        task_est_min: int = int(request.form.get("task_est_min", "0"))
-        assigner_id: str = request.form.get("assigner_id", "")
-        assign_id: str = request.form.get("assign_id", "")
-        group_id: str = request.form.get("group_id", "")
+        request_data: dict = request.get_json()
+        task_name: str = request_data.get("task_name", "")
+        task_description: str = request_data.get("task_description", "")
+        task_due_year: int = int(request_data.get("task_due_year", "2000"))
+        task_due_month: int = int(request_data.get("task_due_month", "1"))
+        task_due_date: int = int(request_data.get("task_due_date", "1"))
+        task_due_hour: int = int(request_data.get("task_due_hour", "0"))
+        task_due_min: int = int(request_data.get("task_due_min", "0"))
+        task_est_day: int = int(request_data.get("task_est_day", "0"))
+        task_est_hour: int = int(request_data.get("task_est_hour", "0"))
+        task_est_min: int = int(request_data.get("task_est_min", "0"))
+        assigner_id: str = request_data.get("assigner_id", "")
+        assign_id: str = request_data.get("assign_id", "")
+        group_id: str = request_data.get("group_id", "")
         task_due: float = datetime(
             task_due_year, task_due_month, task_due_date, task_due_hour, task_due_min, 0
         ).timestamp()
-        recursive: int = int(request.form.get("recursive", "0"))
-        priority: int = int(request.form.get("priority", "0"))
-        password: str = request.form.get("password", "")
+        recursive: int = int(request_data.get("recursive", "0"))
+        priority: int = int(request_data.get("priority", "0"))
+        password: str = request_data.get("password", "")
 
-        image_file = request.files.get("image", None)
-        if image_file and image_file.filename != "":
-            file_name: str = secure_filename(image_file.filename)
-            image_file.save(join(app.config["UPLOAD_FOLDER"], file_name))
+        file_name: str = "TODO CHANGE HERE"
+        # image_file = request.files.get("image", None)
+        # if image_file and image_file.filename != "":
+        #     file_name: str = secure_filename(image_file.filename)
+        #     image_file.save(join(app.config["UPLOAD_FOLDER"], file_name))
     except Exception as e:
         response_json = jsonify(
             [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
@@ -201,21 +205,22 @@ def handle_edit_task() -> Response:
         response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
         return response_json
     try:
-        task_id: str = request.form.get("task_id", "")
-        task_name: str = request.form.get("task_name", "")
-        task_description: str = request.form.get("task_description", "")
-        task_due_year: int = int(request.form.get("task_due_year", "0"))
-        task_due_month: int = int(request.form.get("task_due_month", "0"))
-        task_due_date: int = int(request.form.get("task_due_date", "0"))
-        task_due_hour: int = int(request.form.get("task_due_hour", "0"))
-        task_due_min: int = int(request.form.get("task_due_min", "0"))
-        task_est_day: int = int(request.form.get("task_est_day", "0"))
-        task_est_hour: int = int(request.form.get("task_est_hour", "0"))
-        task_est_min: int = int(request.form.get("task_est_min", "0"))
-        assigner_id: str = request.form.get("assigner_id", "")
-        assign_id: str = request.form.get("assign_id", "")
-        group_id: str = request.form.get("group_id", "")
-        password: str = request.form.get("password", "")
+        request_data: dict = request.get_json()
+        task_id: str = request_data.get("task_id", "")
+        task_name: str = request_data.get("task_name", "")
+        task_description: str = request_data.get("task_description", "")
+        task_due_year: int = int(request_data.get("task_due_year", "2000"))
+        task_due_month: int = int(request_data.get("task_due_month", "1"))
+        task_due_date: int = int(request_data.get("task_due_date", "1"))
+        task_due_hour: int = int(request_data.get("task_due_hour", "0"))
+        task_due_min: int = int(request_data.get("task_due_min", "0"))
+        task_est_day: int = int(request_data.get("task_est_day", "0"))
+        task_est_hour: int = int(request_data.get("task_est_hour", "0"))
+        task_est_min: int = int(request_data.get("task_est_min", "0"))
+        assigner_id: str = request_data.get("assigner_id", "")
+        assign_id: str = request_data.get("assign_id", "")
+        group_id: str = request_data.get("group_id", "")
+        password: str = request_data.get("password", "")
 
         task_due: float = datetime(
             task_due_year, task_due_month, task_due_date, task_due_hour, task_due_min, 0
@@ -267,9 +272,10 @@ def handle_delete_task() -> Response:
         response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
         return response_json
     try:
-        task_id: str = request.form.get("task_id", "")
-        user_id: str = request.form.get("user_id", "")
-        password: str = request.form.get("password", "")
+        request_data: dict = request.get_json()
+        task_id: str = request_data.get("task_id", "")
+        user_id: str = request_data.get("user_id", "")
+        password: str = request_data.get("password", "")
     except Exception as e:
         response_json = jsonify(
             [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
@@ -308,8 +314,9 @@ def handle_get_user_task() -> Response:
         response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
         return response_json
     try:
-        user_id: str = request.form.get("user_id", "")
-        password: str = request.form.get("password", "")
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        password: str = request_data.get("password", "")
     except Exception as e:
         response_json = jsonify(
             [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
@@ -347,8 +354,9 @@ def handle_get_group_list() -> Response:
         response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
         return response_json
     try:
-        user_id: str = request.form.get("user_id", "")
-        password: str = request.form.get("password", "")
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        password: str = request_data.get("password", "")
     except Exception as e:
         response_json = jsonify(
             [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
