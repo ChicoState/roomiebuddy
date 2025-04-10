@@ -202,6 +202,44 @@ class _AddRoomatePageState extends State<AddRoomatePage> {
             ),
             const SizedBox(height: 20),
 
+            // -------------------- Join Group -------------------- //
+            const Text(
+              'Join Group',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: invitedUser,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Roomie Buddy Group ID',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: themeProvider.themeColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () {},
+                  child: Text('Request Join', style: TextStyle(color: themeProvider.lightTextColor, fontSize: 20)),
+                ),
+              ]
+            ),
+            const SizedBox(height: 20),
+
             // -------------------- Pending Requests -------------------- //
             const Text(
               'Pending Requests',
@@ -214,13 +252,26 @@ class _AddRoomatePageState extends State<AddRoomatePage> {
 
             const SingleChildScrollView(
 
-                child:
+              child: Column(
+
+                children: [
                   Card(
                     child: ListTile(
                       title: Text('William wants to join House of Buddies'),
                         
                     ),
                   ),
+
+                  Card(
+                    child: ListTile(
+                      title: Text('William has invited you to Doofenshmirtz Evil Incorporated'),
+                        
+                    ),
+                  ),
+                ]
+              )
+              
+                
             ),
 
             //No task display
