@@ -93,16 +93,18 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   CalendarStyle _buildCalendarStyle() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return CalendarStyle(
       outsideDaysVisible: false,
-      weekendTextStyle: const TextStyle(color: Colors.black),
-      selectedDecoration: const BoxDecoration(
-        color: Colors.green,
+      weekendTextStyle: TextStyle(color: themeProvider.calendarWeekendTextColor),
+      selectedDecoration: BoxDecoration(
+        color: themeProvider.calendarSelectedDayColor,
         shape: BoxShape.rectangle,
-        borderRadius: BorderRadius.all(Radius.circular(_borderRadius)),
+        borderRadius: const BorderRadius.all(Radius.circular(_borderRadius)),
       ),
       todayDecoration: BoxDecoration(
-        color: Colors.green.shade900.withOpacity(0.5),
+        color: themeProvider.calendarTodayColor,
         shape: BoxShape.rectangle,
         borderRadius: const BorderRadius.all(Radius.circular(_borderRadius)),
       ),
@@ -133,7 +135,7 @@ class _CalendarPageState extends State<CalendarPage> {
         borderRadius: const BorderRadius.all(Radius.circular(_borderRadius)),
         border: Border.all(color: themeProvider.currentBorderColor, width: 0.5),
       ),
-      textStyle: const TextStyle(fontSize: _fontSize),
+      textStyle: TextStyle(fontSize: _fontSize, color: themeProvider.calendarDefaultTextColor),
     );
   }
 
@@ -142,13 +144,13 @@ class _CalendarPageState extends State<CalendarPage> {
     return _buildBaseDayContainer(
       day,
       decoration: BoxDecoration(
-        color: themeProvider.themeColor,
+        color: themeProvider.calendarSelectedDayColor,
         shape: BoxShape.rectangle,
         borderRadius: const BorderRadius.all(Radius.circular(_borderRadius)),
       ),
-      textStyle: const TextStyle(
+      textStyle: TextStyle(
         fontSize: _fontSize,
-        color: Colors.white,
+        color: themeProvider.calendarSelectedDayTextColor,
       ),
     );
   }
@@ -158,13 +160,13 @@ class _CalendarPageState extends State<CalendarPage> {
     return _buildBaseDayContainer(
       day,
       decoration: BoxDecoration(
-        color: themeProvider.themeColor.withOpacity(0.5),
+        color: themeProvider.calendarTodayColor,
         shape: BoxShape.rectangle,
         borderRadius: const BorderRadius.all(Radius.circular(_borderRadius)),
       ),
-      textStyle: const TextStyle(
+      textStyle: TextStyle(
         fontSize: _fontSize,
-        color: Colors.white,
+        color: themeProvider.calendarSelectedDayTextColor,
       ),
     );
   }

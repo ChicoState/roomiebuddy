@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:roomiebuddy/providers/theme_provider.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:roomiebuddy/login_screen.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -10,6 +12,51 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  void _openColorPicker(BuildContext context, ThemeProvider themeProvider) {
+    Color pickerColor = themeProvider.themeColor;
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Pick a theme color'),
+          content: SingleChildScrollView(
+            child: ColorPicker(
+              pickerColor: pickerColor,
+              onColorChanged: (Color color) {
+                pickerColor = color;
+              },
+              pickerAreaHeightPercent: 0.8,
+              enableAlpha: false,
+              displayThumbColor: true,
+              labelTypes: const [
+                ColorLabelType.hex,
+                ColorLabelType.rgb,
+                ColorLabelType.hsv,
+              ],
+              paletteType: PaletteType.hsv,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Apply'),
+              onPressed: () {
+                themeProvider.setThemeColor(pickerColor);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -70,12 +117,12 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 onTap: () {
-                  // Color selection will be implemented later
+                  _openColorPicker(context, themeProvider);
                 },
               ),
             ),
             
-            // Account Section - with more spacing for separation
+            // Account Section
             const SizedBox(height: 32),
             const Text(
               'Account',
@@ -100,7 +147,40 @@ class _SettingsPageState extends State<SettingsPage> {
                   color: themeProvider.errorColor,
                 ),
                 onTap: () {
-                  // Non-functional
+                  // Show confirmation dialog
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Confirm Logout'),
+                        content: const Text('Are you sure you want to log out?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close dialog
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              // Close dialog
+                              Navigator.of(context).pop();
+                              
+                              // Navigate to login screen
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                (route) => false, // This removes all previous routes
+                              );
+                            },
+                            child: Text(
+                              'Logout',
+                              style: TextStyle(color: themeProvider.errorColor),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
               ),
             ),

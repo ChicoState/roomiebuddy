@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:roomiebuddy/login_screen.dart';
 // import 'package:myapp/main.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:provider/provider.dart';
+import 'package:roomiebuddy/providers/theme_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -29,12 +31,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context){
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return Scaffold(
       body: Container(
         width: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.white, Colors.greenAccent], 
+            colors: [themeProvider.currentBackground, themeProvider.themeColor], 
             begin: Alignment.topRight,
             end: Alignment.bottomLeft)),
       child: Column(
@@ -49,7 +53,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             animatedTexts: [
               FadeAnimatedText(
                 'Roomie Buddy',
-                textStyle: const TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold),
+                textStyle: TextStyle(
+                  fontSize: 32.0, 
+                  fontWeight: FontWeight.bold,
+                  color: themeProvider.currentTextColor
+                ),
                 duration: const Duration(milliseconds: 2000),
               ),
             ],

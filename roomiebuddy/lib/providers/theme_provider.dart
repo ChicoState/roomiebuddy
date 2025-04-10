@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  bool _isDarkMode = false;
-  Color _themeColor = Colors.greenAccent;
+  bool _isDarkMode = false; // GLOBAL DARK MODE FLAG
+  Color _themeColor = Colors.greenAccent; // GLOBAL THEME COLOR
+
+  // Utility colors (Theme independent)
+  Color get errorColor => Colors.red;
+  Color get warningColor => Colors.orange;
+  Color get successColor => Colors.green;
   
-  // Global color constants - Light Mode
+  // Global colors (Light Mode)
   Color get lightBackground => Colors.white;
   Color get lightCardBackground => Colors.white;
   Color get lightTextColor => Colors.black;
@@ -12,7 +17,7 @@ class ThemeProvider extends ChangeNotifier {
   Color get lightBorder => Colors.grey[300]!;
   Color get lightInputFill => Colors.white;
   
-  // Global color constants - Dark Mode
+  // Global colors (Dark Mode)
   Color get darkBackground => Colors.grey[850]!;
   Color get darkCardBackground => Colors.grey[800]!;
   Color get darkWidgetBackground => Colors.grey[700]!;
@@ -20,22 +25,26 @@ class ThemeProvider extends ChangeNotifier {
   Color get darkTextSecondary => Colors.grey[300]!;
   Color get darkBorder => Colors.grey[600]!;
   
-  // Utility colors that don't change with theme
-  Color get errorColor => Colors.red;
-  Color get warningColor => Colors.orange;
-  Color get successColor => Colors.green;
-  
-  // Switch colors
+  // Toggle button colors (Dark/Light mode in settings page)
   Color get switchActiveThumb => Colors.grey[800]!;
   Color get switchActiveTrack => Colors.grey[600]!;
   Color get switchInactiveThumb => Colors.white;
   Color get switchInactiveTrack => Colors.grey[300]!;
+
+    // Circle colors (Main background)
+  Color get primaryHeaderColor => _themeColor.withOpacity(0.8);
+  Color get primaryHeaderOverlayColor => Colors.white.withOpacity(0.1);
   
-  // Getters for theme state
+  // Calendar colors
+  Color get calendarSelectedDayColor => _themeColor;
+  Color get calendarTodayColor => _themeColor.withOpacity(0.5);
+  Color get calendarWeekendTextColor => _isDarkMode ? darkTextColor : lightTextColor;
+  Color get calendarDefaultTextColor => _isDarkMode ? darkTextColor : lightTextColor;
+  Color get calendarSelectedDayTextColor => _isDarkMode ? darkBackground : Colors.white;
+  
+  // Getters
   bool get isDarkMode => _isDarkMode;
   Color get themeColor => _themeColor;
-  
-  // Current theme-dependent colors (for widgets to easily access)
   Color get currentBackground => _isDarkMode ? darkBackground : lightBackground;
   Color get currentCardBackground => _isDarkMode ? darkCardBackground : lightCardBackground;
   Color get currentTextColor => _isDarkMode ? darkTextColor : lightTextColor;
@@ -44,18 +53,26 @@ class ThemeProvider extends ChangeNotifier {
   Color get currentInputFill => _isDarkMode ? darkWidgetBackground : lightInputFill;
 
   ThemeData get themeData {
-    return _isDarkMode ? _darkTheme : _lightTheme;
+    return _isDarkMode ? _createTheme(true) : _createTheme(false);
   }
 
-  ThemeData get _lightTheme {
+  ThemeData _createTheme(bool isDark) {
+    final backgroundColor = isDark ? darkBackground : lightBackground;
+    final cardBackground = isDark ? darkCardBackground : lightCardBackground;
+    final textColor = isDark ? darkTextColor : lightTextColor;
+    final secondaryTextColor = isDark ? darkTextSecondary : lightTextSecondary;
+    final borderColor = isDark ? darkBorder : lightBorder;
+    final inputFillColor = isDark ? darkWidgetBackground : lightInputFill;
+    final appBarBgColor = isDark ? _themeColor.withOpacity(0.8) : _themeColor;
+    
     return ThemeData(
-      brightness: Brightness.light,
+      brightness: isDark ? Brightness.dark : Brightness.light,
       primarySwatch: Colors.blue,
       primaryColor: _themeColor,
-      scaffoldBackgroundColor: lightBackground,
-      canvasColor: lightBackground,
+      scaffoldBackgroundColor: backgroundColor,
+      canvasColor: backgroundColor,
       appBarTheme: AppBarTheme(
-        backgroundColor: _themeColor,
+        backgroundColor: appBarBgColor,
         titleTextStyle: TextStyle(color: lightTextColor, fontSize: 20),
         iconTheme: IconThemeData(color: lightTextColor),
       ),
@@ -72,80 +89,29 @@ class ThemeProvider extends ChangeNotifier {
         ),
       ),
       cardTheme: CardTheme(
-        color: lightCardBackground,
+        color: cardBackground,
       ),
-      // Light mode input decoration
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: lightInputFill,
-        hintStyle: TextStyle(color: lightTextSecondary),
-        labelStyle: TextStyle(color: lightTextSecondary),
+        fillColor: inputFillColor,
+        hintStyle: TextStyle(color: secondaryTextColor),
+        labelStyle: TextStyle(color: secondaryTextColor),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: lightBorder),
+          borderSide: BorderSide(color: borderColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: lightBorder),
+          borderSide: BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: _themeColor),
         ),
       ),
-    );
-  }
-
-  ThemeData get _darkTheme {
-    return ThemeData(
-      brightness: Brightness.dark,
-      primarySwatch: Colors.blue,
-      primaryColor: _themeColor,
-      scaffoldBackgroundColor: darkBackground,
-      canvasColor: darkBackground,
-      appBarTheme: AppBarTheme(
-        backgroundColor: _themeColor.withOpacity(0.8),
-        titleTextStyle: TextStyle(color: lightTextColor, fontSize: 20), // Using light text for contrast
-        iconTheme: IconThemeData(color: lightTextColor),
-      ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        selectedItemColor: _themeColor,
-        unselectedItemColor: lightTextColor, // Using light text for contrast
-        selectedLabelStyle: TextStyle(color: lightTextColor),
-        unselectedLabelStyle: TextStyle(color: lightTextColor),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _themeColor,
-          foregroundColor: lightTextColor,
-        ),
-      ),
-      cardTheme: CardTheme(
-        color: darkCardBackground,
-      ),
-      // Dark mode input decoration
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: darkWidgetBackground, 
-        hintStyle: TextStyle(color: darkTextSecondary), 
-        labelStyle: TextStyle(color: darkTextSecondary), 
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: darkBorder),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: darkBorder),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: _themeColor),
-        ),
-      ),
-      // Ensure text is white in dark mode
       textTheme: TextTheme(
-        bodyMedium: TextStyle(color: darkTextColor),
-        bodyLarge: TextStyle(color: darkTextColor),
+        bodyMedium: TextStyle(color: textColor),
+        bodyLarge: TextStyle(color: textColor),
       ),
     );
   }

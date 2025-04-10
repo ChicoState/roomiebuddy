@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 //To reuse this container for future refrence
 class TCircularContainer extends StatelessWidget {
@@ -9,7 +11,7 @@ class TCircularContainer extends StatelessWidget {
     this.height = 400,
     this.radius = 200, // Half of width/height for a circle
     this.padding = EdgeInsets.zero,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor,
   });
 
   final double? width;
@@ -17,10 +19,13 @@ class TCircularContainer extends StatelessWidget {
   final double radius;
   final EdgeInsets padding;
   final Widget? child;
-  final Color backgroundColor;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final bgColor = backgroundColor ?? themeProvider.currentBackground;
+    
     return Padding(
       padding: padding,
       child: Container(
@@ -28,7 +33,7 @@ class TCircularContainer extends StatelessWidget {
         height: height,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(radius),
-          color: backgroundColor, // Use the passed background color
+          color: bgColor, // Use the passed background color or fallback to theme
         ),
         child: child,
       ),

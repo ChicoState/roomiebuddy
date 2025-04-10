@@ -28,29 +28,30 @@ class _NavscreenState extends State<Navscreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final iconColor = themeProvider.isDarkMode ? themeProvider.darkTextColor : themeProvider.lightTextColor;
     
     return Scaffold(
       bottomNavigationBar: CurvedNavigationBar(
         items: [
           Icon(Icons.home,
             size: 30,
-            color: themeProvider.lightTextColor,
+            color: iconColor,
           ),
           Icon(Icons.calendar_month,
             size: 30,
-            color: themeProvider.lightTextColor,
+            color: iconColor,
           ),
           Icon(Icons.add, 
             size: 50,
-            color: themeProvider.lightTextColor,
+            color: iconColor,
           ),
           Icon(Icons.people,
             size: 30,
-            color: themeProvider.lightTextColor,
+            color: iconColor,
           ),
           Icon(Icons.settings,
             size: 30,
-            color: themeProvider.lightTextColor,
+            color: iconColor,
           ),
         ],
         onTap: (value){
