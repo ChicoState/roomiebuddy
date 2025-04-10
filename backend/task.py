@@ -21,7 +21,7 @@ CREATE_USER_TABLE: str = (
     "email TEXT NOT NULL, password TEXT NOT NULL);"
 )
 CREATE_GROUP_TABLE: str = (
-    "CREATE TABLE IF NOT EXISTS group"
+    "CREATE TABLE IF NOT EXISTS task_group"
     "(uuid TEXT PRIMARY KEY, name TEXT NOT NULL, "
     "description TEXT, owner_id INT NOT NULL);"
 )
@@ -55,7 +55,7 @@ def check_table() -> Connection:
     if (
         len(data_cursor.execute("SELECT * FROM task;").description) != 14
         or len(data_cursor.execute("SELECT * FROM user;").description) != 4
-        or len(data_cursor.execute("SELECT * FROM group;").description) != 4
+        or len(data_cursor.execute("SELECT * FROM task_group;").description) != 4
         or len(data_cursor.execute("SELECT * FROM group_user;").description) != 2
     ):
         data_con.close()
