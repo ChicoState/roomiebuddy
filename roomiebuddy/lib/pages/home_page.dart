@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:provider/provider.dart';
 import '../common/widget/appbar/appbar.dart';
 import '../containers/primary_header_container.dart';
@@ -8,7 +9,6 @@ import '../providers/theme_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-
   @override
   HomePageState createState() => HomePageState();
 }
@@ -18,6 +18,22 @@ class HomePageState extends State<HomePage> {
   bool _isLoading = false;
   List<Map<String, dynamic>> _tasks = [];
   TextEditingController _searchController = TextEditingController();
+
+  //  Carousel Feature Start
+  final List<Map<String, dynamic>> roommateGroups = [
+    {
+      "groupName": "Room 101",
+      "members": ["Alice", "Bob", "Charlie"]
+    },
+    {
+      "groupName": "Kitchen Crew",
+      "members": ["Dana", "Eli"]
+    },
+    {
+      "groupName": "Laundry Legends",
+      "members": ["Fred", "Gina", "Harry"]
+    },
+  ];
 
   @override
   void initState() {
@@ -41,7 +57,6 @@ class HomePageState extends State<HomePage> {
     setState(() {
       _isLoading = true;
     });
-
     try {
       final response = await http.post(
         Uri.parse('http://10.0.2.2:5000/get_user_task'),
@@ -50,9 +65,8 @@ class HomePageState extends State<HomePage> {
           'category': _selectedCategory,
           'user_id': "dummy_id",
           "password": "dummy_password"
-          }),
+        }),
       );
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data.containsKey("message") && data["message"] == "success") {
@@ -90,6 +104,7 @@ class HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     String userName = "Naruto";
     String? profileImagePath;
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return SafeArea(
       child: Scaffold(
@@ -106,7 +121,6 @@ class HomePageState extends State<HomePage> {
                   ),
                   child: ClipOval(
                     child: Image.asset(
-                      //Hi
                       profileImagePath,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Icon(Icons.person, size: 30, color: Colors.grey),
@@ -140,7 +154,31 @@ class HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TPrimaryHeaderContainer(child: Container()),
+              Container(
+              color: themeProvider.themeColor,
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      child: Text(
+                        'Roommate Groups',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: themeProvider.lightTextColor,
+                        ),
+                      ),
+                    ),
+                    Container(
+  color: Colors.white.withOpacity(0.05),
+  height: 180,
+  child: _buildGroupCarousel(),
+),
+                  ],
+                ),
+              ),
               const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(
@@ -156,9 +194,72 @@ class HomePageState extends State<HomePage> {
     );
   }
 
+  // Carousel Widget
+  Widget _buildGroupCarousel() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    return SizedBox(
+      height: 140,
+      child: CarouselSlider(
+        options: CarouselOptions(
+          height: 140.0,
+          enlargeCenterPage: true,
+          autoPlay: false,
+          viewportFraction: 0.85,
+        ),
+        items: roommateGroups.map((group) {
+          return Builder(
+            builder: (BuildContext context) {
+              return GestureDetector(
+                onTap: () {
+                  print('Tapped group: ${group['groupName']}');
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 5),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: themeProvider.currentCardBackground,
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: themeProvider.themeColor),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 5,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        group['groupName'],
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: themeProvider.currentTextColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Members: ${group['members'].join(', ')}",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: themeProvider.currentSecondaryTextColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget displayTasks() {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -183,7 +284,6 @@ class HomePageState extends State<HomePage> {
 
 class TaskSearchDelegate extends SearchDelegate {
   final List<Map<String, dynamic>> tasks;
-
   TaskSearchDelegate({required this.tasks});
 
   @override
@@ -213,7 +313,6 @@ class TaskSearchDelegate extends SearchDelegate {
     List<Map<String, dynamic>> filteredTasks = tasks.where((task) {
       return task['taskName'].toLowerCase().contains(query.toLowerCase());
     }).toList();
-
     return ListView.builder(
       itemCount: filteredTasks.length,
       itemBuilder: (context, index) {
@@ -231,3 +330,4 @@ class TaskSearchDelegate extends SearchDelegate {
     return buildResults(context);
   }
 }
+
