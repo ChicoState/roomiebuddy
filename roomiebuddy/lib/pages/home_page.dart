@@ -4,11 +4,11 @@ import 'dart:convert';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:provider/provider.dart';
 import '../common/widget/appbar/appbar.dart';
-import '../containers/primary_header_container.dart';
 import '../providers/theme_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
   @override
   HomePageState createState() => HomePageState();
 }
@@ -19,20 +19,10 @@ class HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> _tasks = [];
   TextEditingController _searchController = TextEditingController();
 
-  //  Carousel Feature Start
   final List<Map<String, dynamic>> roommateGroups = [
-    {
-      "groupName": "Room 101",
-      "members": ["Alice", "Bob", "Charlie"]
-    },
-    {
-      "groupName": "Kitchen Crew",
-      "members": ["Dana", "Eli"]
-    },
-    {
-      "groupName": "Laundry Legends",
-      "members": ["Fred", "Gina", "Harry"]
-    },
+    {"groupName": "Room 101", "members": ["Alice", "Bob", "Charlie"]},
+    {"groupName": "Kitchen Crew", "members": ["Dana", "Eli"]},
+    {"groupName": "Laundry Legends", "members": ["Fred", "Gina", "Harry"]},
   ];
 
   @override
@@ -43,13 +33,9 @@ class HomePageState extends State<HomePage> {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) {
-      return "Good Morning";
-    } else if (hour < 18) {
-      return "Good Afternoon";
-    } else {
-      return "Good Evening";
-    }
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
   }
 
   Future<void> fetchTasks() async {
@@ -57,6 +43,7 @@ class HomePageState extends State<HomePage> {
     setState(() {
       _isLoading = true;
     });
+
     try {
       final response = await http.post(
         Uri.parse('http://10.0.2.2:5000/get_user_task'),
@@ -67,27 +54,30 @@ class HomePageState extends State<HomePage> {
           "password": "dummy_password"
         }),
       );
+
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        if (data.containsKey("message") && data["message"] == "success") {
-          data.remove("message");
-          if (mounted) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is List && decoded.isNotEmpty) {
+          final firstItem = decoded[0];
+          final message = firstItem["message"];
+          if (message is Map<String, dynamic>) {
             setState(() {
-              _tasks = data.entries.map((e) {
+              _tasks = message.entries.map((e) {
+                final task = e.value;
                 return {
                   "id": e.key,
-                  "taskName": e.value["name"] ?? "No Task Name",
-                  "assignedBy": e.value["assignedBy"] ?? "Unknown",
-                  "priority": e.value["priority"] ?? "No Priority",
+                  "taskName": task["name"] ?? "No Task Name",
+                  "assignedBy": task["assigner_id"] ?? "Unknown",
+                  "priority": task["priority"] ?? "Low",
+                  "description": task["description"] ?? "",
+                  "dueDate": task["due_date"],
+                  "dueTime": task["due_time"],
+                  "photo": task["photo_url"],
                 };
               }).toList();
             });
           }
-        } else {
-          throw Exception('Unexpected data format');
         }
-      } else {
-        throw Exception('Failed to load tasks');
       }
     } catch (e) {
       print('Error fetching tasks: $e');
@@ -123,7 +113,8 @@ class HomePageState extends State<HomePage> {
                     child: Image.asset(
                       profileImagePath,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Icon(Icons.person, size: 30, color: Colors.grey),
+                      errorBuilder: (context, error, stackTrace) =>
+                          Icon(Icons.person, size: 30, color: Colors.grey),
                     ),
                   ),
                 )
@@ -138,14 +129,20 @@ class HomePageState extends State<HomePage> {
                   child: Icon(Icons.person, size: 30, color: Colors.grey),
                 ),
               const SizedBox(width: 10),
-              Text("${_getGreeting()}, $userName", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+              Text(
+                "${_getGreeting()}, $userName",
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
             ],
           ),
           actions: [
             IconButton(
               icon: const Icon(Icons.search),
               onPressed: () {
-                showSearch(context: context, delegate: TaskSearchDelegate(tasks: _tasks));
+                showSearch(
+                  context: context,
+                  delegate: TaskSearchDelegate(tasks: _tasks),
+                );
               },
             ),
           ],
@@ -155,13 +152,14 @@ class HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-              color: themeProvider.themeColor,
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Column(
+                color: themeProvider.themeColor,
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 12.0),
                       child: Text(
                         'Roommate Groups',
                         style: TextStyle(
@@ -172,21 +170,22 @@ class HomePageState extends State<HomePage> {
                       ),
                     ),
                     Container(
-  color: Colors.white.withOpacity(0.05),
-  height: 180,
-  child: _buildGroupCarousel(),
-),
+                      color: Colors.white.withOpacity(0.05),
+                      height: 180,
+                      child: _buildGroupCarousel(),
+                    ),
                   ],
                 ),
               ),
               const Padding(
                 padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'My Tasks',
-                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                ),
+                child: Text('My Tasks',
+                    style:
+                        TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
               ),
-              _isLoading ? const Center(child: CircularProgressIndicator()) : displayTasks(),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : displayTasks(),
             ],
           ),
         ),
@@ -194,7 +193,35 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  // Carousel Widget
+  Widget displayTasks() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _tasks.length,
+      itemBuilder: (context, index) {
+        final task = _tasks[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: ListTile(
+            title: Text(task['taskName']),
+            subtitle: Text('Assigned by: ${task['assignedBy']}'),
+            trailing: Text(task['priority'],
+                style: TextStyle(color: themeProvider.errorColor)),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TaskDetailScreen(task: task),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildGroupCarousel() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return SizedBox(
@@ -211,7 +238,12 @@ class HomePageState extends State<HomePage> {
             builder: (BuildContext context) {
               return GestureDetector(
                 onTap: () {
-                  print('Tapped group: ${group['groupName']}');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => GroupDetailScreen(group: group),
+                    ),
+                  );
                 },
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 5),
@@ -257,27 +289,67 @@ class HomePageState extends State<HomePage> {
       ),
     );
   }
+}
 
-  Widget displayTasks() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _tasks.length,
-      itemBuilder: (context, index) {
-        final task = _tasks[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          child: ListTile(
-            title: Text(task['taskName']),
-            subtitle: Text('Assigned by: ${task['assignedBy']}'),
-            trailing: Text(
-              task['priority'],
-              style: TextStyle(color: themeProvider.errorColor),
-            ),
-          ),
-        );
-      },
+// ==========================
+// EXTRA SCREENS (Appended)
+// ==========================
+
+class TaskDetailScreen extends StatelessWidget {
+  final Map<String, dynamic> task;
+
+  const TaskDetailScreen({super.key, required this.task});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(task['taskName'])),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            Text("Title: ${task['taskName']}",
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Text("Description: ${task['description'] ?? "No description"}"),
+            const SizedBox(height: 12),
+            Text("Priority: ${task['priority']}"),
+            const SizedBox(height: 12),
+            if (task['photo'] != null)
+              Image.network(task['photo'],
+                  errorBuilder: (_, __, ___) => const Text("Image failed to load")),
+            const SizedBox(height: 12),
+            Text("Due Date: ${task['dueDate'] ?? 'Not specified'}"),
+            Text("Time Due: ${task['dueTime'] ?? 'Not specified'}"),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class GroupDetailScreen extends StatelessWidget {
+  final Map<String, dynamic> group;
+
+  const GroupDetailScreen({super.key, required this.group});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(group['groupName'])),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Group Name: ${group['groupName']}",
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            Text("Members:", style: const TextStyle(fontSize: 20)),
+            ...List<Widget>.from(group['members'].map((m) => Text("- $m"))),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -287,47 +359,37 @@ class TaskSearchDelegate extends SearchDelegate {
   TaskSearchDelegate({required this.tasks});
 
   @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: const Icon(Icons.clear),
-        onPressed: () {
-          query = '';
-        },
-      ),
-    ];
-  }
+  List<Widget> buildActions(BuildContext context) =>
+      [IconButton(icon: const Icon(Icons.clear), onPressed: () => query = '')];
 
   @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, null);
-      },
-    );
-  }
+  Widget buildLeading(BuildContext context) =>
+      IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => close(context, null));
 
   @override
   Widget buildResults(BuildContext context) {
-    List<Map<String, dynamic>> filteredTasks = tasks.where((task) {
-      return task['taskName'].toLowerCase().contains(query.toLowerCase());
-    }).toList();
+    final results = tasks
+        .where((task) =>
+            task['taskName'].toLowerCase().contains(query.toLowerCase()))
+        .toList();
+
     return ListView.builder(
-      itemCount: filteredTasks.length,
-      itemBuilder: (context, index) {
-        final task = filteredTasks[index];
-        return ListTile(
-          title: Text(task['taskName']),
-          subtitle: Text('Assigned by: ${task['assignedBy']}'),
-        );
-      },
+      itemCount: results.length,
+      itemBuilder: (context, index) => ListTile(
+        title: Text(results[index]['taskName']),
+        subtitle: Text('Assigned by: ${results[index]['assignedBy']}'),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TaskDetailScreen(task: results[index]),
+            ),
+          );
+        },
+      ),
     );
   }
 
   @override
-  Widget buildSuggestions(BuildContext context) {
-    return buildResults(context);
-  }
+  Widget buildSuggestions(BuildContext context) => buildResults(context);
 }
-
