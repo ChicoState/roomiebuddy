@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  bool _isDarkMode = false; // GLOBAL DARK MODE FLAG
-  Color _themeColor = Colors.greenAccent; // GLOBAL THEME COLOR
+  bool _isDarkMode = true; // GLOBAL DARK MODE FLAG
+  Color _themeColor = Colors.blueGrey; // GLOBAL THEME COLOR
 
   // Utility colors (Theme independent)
   Color get errorColor => Colors.red;
@@ -73,19 +73,19 @@ class ThemeProvider extends ChangeNotifier {
       canvasColor: backgroundColor,
       appBarTheme: AppBarTheme(
         backgroundColor: appBarBgColor,
-        titleTextStyle: TextStyle(color: lightTextColor, fontSize: 20),
-        iconTheme: IconThemeData(color: lightTextColor),
+        titleTextStyle: TextStyle(color: isDark ? darkTextColor : lightTextColor, fontSize: 20),
+        iconTheme: IconThemeData(color: isDark ? darkTextColor : lightTextColor),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         selectedItemColor: _themeColor,
-        unselectedItemColor: lightTextColor,
-        selectedLabelStyle: TextStyle(color: lightTextColor),
-        unselectedLabelStyle: TextStyle(color: lightTextColor),
+        unselectedItemColor: isDark ? darkTextColor : lightTextColor,
+        selectedLabelStyle: TextStyle(color: isDark ? darkTextColor : lightTextColor),
+        unselectedLabelStyle: TextStyle(color: isDark ? darkTextColor : lightTextColor),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: _themeColor,
-          foregroundColor: lightTextColor,
+          foregroundColor: isDark ? darkTextColor : lightTextColor,
         ),
       ),
       cardTheme: CardTheme(

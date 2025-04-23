@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:roomiebuddy/providers/theme_provider.dart';
+import 'package:roomiebuddy/providers/navigation_provider.dart';
+import 'package:roomiebuddy/services/user_service.dart';
 import 'package:roomiebuddy/splash_screen.dart';
 
-void main() {
+void main() async {
+  // Ensure Flutter is initialized
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize the UserService
+  await UserService.initialize();
+  
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -22,7 +33,7 @@ class MyApp extends StatelessWidget {
           title: 'RommieBuddy',
           debugShowCheckedModeBanner: false,
           theme: themeProvider.themeData,
-          home: SplashScreen(),
+          home: const SplashScreen(),
         );
       }
     );

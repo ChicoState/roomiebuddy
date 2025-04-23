@@ -11,7 +11,12 @@ from task import (
     edit_task,
     delete_task,
     get_user_task,
-    get_group
+    get_group,
+    create_group,
+    remove_user_from_group,
+    delete_group,
+    check_table,
+    check_password
 )  # edit_task, get_user_task, get_group_task,
 from werkzeug.utils import secure_filename
 
@@ -379,6 +384,114 @@ def handle_get_group_list() -> Response:
         make_new_log("get_user_task", e)
         return response_json
     response_json = jsonify([{"error_no": "0", "message": groups}])
+    return response_json
+
+
+@app.route("/create_group", methods=["POST"])
+def handle_create_group() -> Response:
+    """Creates a new group with the user as owner."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    try:
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        group_name: str = request_data.get("group_name", "")
+        description: str = request_data.get("description", "")
+        password: str = request_data.get("password", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("create_group", e)
+        return response_json
+
+    if user_id == "" or group_name == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+
+    try:
+        group_id: str = create_group(
+            user_id=user_id,
+            description=description,
+            group_name=group_name,
+            password=password,
+        )
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("create_group", e)
+        return response_json
+
+    response_json = jsonify(
+        [{"error_no": "0", "message": "success", "group_id": group_id}]
+    )
+    return response_json
+
+
+@app.route("/leave_group", methods=["POST"])
+def handle_leave_group() -> Response:
+    """Allows a user to leave a group."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    try:
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        group_id: str = request_data.get("group_id", "")
+        password: str = request_data.get("password", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("leave_group", e)
+        return response_json
+
+    if user_id == "" or group_id == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+
+    try:
+        # First check if there will be any members left after leaving
+        data_con = check_table()
+        data_cursor = data_con.cursor()
+        
+        # Get current member count
+        data_cursor.execute(
+            "SELECT COUNT(*) FROM group_user WHERE group_id = ?;",
+            (group_id,),
+        )
+        member_count = data_cursor.fetchone()[0]
+        data_con.close()
+        
+        # Remove user from group
+        remove_user_from_group(
+            user_id=user_id,
+            group_id=group_id,
+            password=password,
+        )
+        
+        # If user was the only member, delete the group
+        if member_count <= 1:
+            delete_group(user_id=user_id, group_id=group_id)
+            
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": f"Trouble with backend! {str(e)}"}]
+        )
+        make_new_log("leave_group", e)
+        return response_json
+
+    response_json = jsonify(
+        [{"error_no": "0", "message": "success"}]
+    )
     return response_json
 
 

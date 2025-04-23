@@ -4,6 +4,7 @@
 from datetime import datetime
 from sqlite3 import connect, Connection, Cursor, Error
 from uuid import uuid4
+import os
 
 CREATE_TASK_TABLE: str = (
     "CREATE TABLE IF NOT EXISTS task"
@@ -42,7 +43,18 @@ def check_table() -> Connection:
     """This will check if the task table exists."""
 
     try:
-        data_con: Connection = connect("data/data.db")
+        # Get the directory where the script is located
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # Go up one level to the project root
+        project_root = os.path.dirname(script_dir)
+        # Create data directory if it doesn't exist
+        data_dir = os.path.join(project_root, "data")
+        os.makedirs(data_dir, exist_ok=True)
+        # Construct the full path to the database
+        db_path = os.path.join(data_dir, "data.db")
+        
+        # Add timeout and handle busy/locked database
+        data_con: Connection = connect(db_path, timeout=20.0)
     except Error as e_msg:
         raise e_msg
 
@@ -285,7 +297,8 @@ def create_group(
     user_id: str,
     description: str,
     group_name: str,
-) -> None:
+    password: str = "",
+) -> str:
     """This will create a group."""
     try:
         data_con: Connection = check_table()
@@ -293,23 +306,31 @@ def create_group(
     except Error as e_msg:
         raise e_msg
 
+    if check_user_exists(data_con, user_id) is False:
+        data_con.close()
+        raise Exception("User does not exist.")
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise Exception("Password is incorrect.")
+
     group_id: str = str(uuid4())
     while check_id_exists(data_con, "group", group_id):
         group_id = str(uuid4())
 
     data_cursor.execute(
-        "INSERT INTO group VALUES (?, ?, ?, ?);",
+        "INSERT INTO task_group VALUES (?, ?, ?, ?);",
         (group_id, group_name, description, user_id),
     )
 
     data_cursor.execute(
-        "INSERT INTO group_user VALUES (?, ?);",
-        (group_id, user_id),
+        "INSERT INTO group_user VALUES (?, ?, ?);",
+        (group_id, user_id, "owner"),
     )
 
     data_con.commit()
     data_con.close()
-    return
+    return group_id
 
 
 def add_user_to_group(
@@ -336,38 +357,54 @@ def add_user_to_group(
         raise Exception("User is already in the group.")
 
     data_cursor.execute(
-        "INSERT INTO group_user VALUES (?, ?);",
-        (group_id, user_id),
+        "INSERT INTO group_user VALUES (?, ?, ?);",
+        (group_id, user_id, "member"),
     )
 
+    data_con.commit()
+    data_con.close()
     return
 
 
 def remove_user_from_group(
     user_id: str,
     group_id: str,
+    password: str = "",
 ) -> None:
     """Removes a user from a group."""
+    data_con = None
     try:
-        data_con: Connection = check_table()
+        data_con = check_table()
         data_cursor: Cursor = data_con.cursor()
-    except Error as e_msg:
-        raise e_msg
 
-    if check_user_exists(data_con, user_id) is False:
-        data_con.close()
-        raise Exception("User does not exist.")
+        if check_user_exists(data_con, user_id) is False:
+            raise Exception("User does not exist.")
 
-    if check_group_exists(data_con, group_id) is False:
-        data_con.close()
-        raise Exception("Group does not exist.")
+        if check_group_exists(data_con, group_id) is False:
+            raise Exception("Group does not exist.")
 
-    data_cursor.execute(
-        "DELETE FROM group_user WHERE group_id = ? AND user_id = ?;",
-        (group_id, user_id),
-    )
+        if password and check_password(data_con, user_id, password) is False:
+            raise Exception("Password is incorrect.")
 
-    return
+        # Begin a transaction
+        data_cursor.execute("BEGIN TRANSACTION;")
+        
+        data_cursor.execute(
+            "DELETE FROM group_user WHERE group_id = ? AND user_id = ?;",
+            (group_id, user_id),
+        )
+
+        # Commit the transaction
+        data_con.commit()
+    except Exception as e:
+        # Rollback in case of error
+        if data_con:
+            data_con.rollback()
+        raise e
+    finally:
+        # Always close the connection
+        if data_con:
+            data_con.close()
 
 
 def delete_group(
@@ -375,40 +412,43 @@ def delete_group(
     group_id: str,
 ) -> None:
     """Deletes a group."""
+    data_con = None
     try:
-        data_con: Connection = check_table()
+        data_con = check_table()
         data_cursor: Cursor = data_con.cursor()
-    except Error as e_msg:
-        raise e_msg
 
-    if check_group_exists(data_con, group_id) is False:
-        data_con.close()
-        raise Exception("Group does not exist.")
+        if check_group_exists(data_con, group_id) is False:
+            raise Exception("Group does not exist.")
 
-    if check_user_exists(data_con, user_id) is False:
-        data_con.close()
-        raise Exception("User does not exist.")
+        if check_user_exists(data_con, user_id) is False:
+            raise Exception("User does not exist.")
 
-    data_cursor.execute(
-        "SELECT * FROM task_group WHERE uuid = ? AND owner_id = ?;",
-        (group_id, user_id),
-    )
+        # Begin a transaction
+        data_cursor.execute("BEGIN TRANSACTION;")
+        
+        # We'll skip the owner check when auto-deleting an empty group
+        # Just delete the group and its references
+        data_cursor.execute(
+            "DELETE FROM task_group WHERE uuid = ?;",
+            (group_id,),
+        )
 
-    if len(data_cursor.fetchall()) == 0:
-        data_con.close()
-        raise Exception("User does not own the group.")
+        data_cursor.execute(
+            "DELETE FROM group_user WHERE group_id = ?;",
+            (group_id,),
+        )
 
-    data_cursor.execute(
-        "DELETE FROM task_group WHERE uuid = ?;",
-        (group_id,),
-    )
-
-    data_cursor.execute(
-        "DELETE FROM group_user WHERE group_id = ?;",
-        (group_id,),
-    )
-
-    return
+        # Commit the transaction
+        data_con.commit()
+    except Exception as e:
+        # Rollback in case of error
+        if data_con:
+            data_con.rollback()
+        raise e
+    finally:
+        # Always close the connection
+        if data_con:
+            data_con.close()
 
 
 def get_group(
@@ -431,17 +471,33 @@ def get_group(
         raise Exception("Password is incorrect.")
 
     data_cursor.execute(
-        "SELECT * FROM group_user WHERE user_id = ?;",
+        "SELECT gu.group_id, gu.user_id, gu.role_id, tg.name, tg.description, tg.owner_id " +
+        "FROM group_user gu " +
+        "JOIN task_group tg ON gu.group_id = tg.uuid " +
+        "WHERE gu.user_id = ?;",
         (user_id,),
     )
 
     group_list: list[tuple] = data_cursor.fetchall()
     new_group_list: dict[str, dict] = {}
     for group in group_list:
-        new_group_list[group[0]] = {
-            "group_id": group[0],
+        group_id = group[0]
+        
+        # Count members in this group
+        data_cursor.execute(
+            "SELECT COUNT(*) FROM group_user WHERE group_id = ?;",
+            (group_id,),
+        )
+        member_count = data_cursor.fetchone()[0]
+        
+        new_group_list[group_id] = {
+            "group_id": group_id,
             "user_id": group[1],
             "role_id": group[2],
+            "group_name": group[3],
+            "description": group[4],
+            "owner_id": group[5],
+            "member_count": member_count
         }
     data_con.close()
 
@@ -630,6 +686,7 @@ def get_user_task(user_id: str, password: str) -> dict[str, dict]:
             "assign_id": task[8],
             "group_id": task[9],
             "completed": bool(task[10]),
+            "priority": int(task[11]) if task[11] is not None else 1,
         }
     data_con.close()
 
@@ -677,6 +734,7 @@ def get_group_task(
             "assign_id": task[8],
             "group_id": task[9],
             "completed": bool(task[10]),
+            "priority": int(task[11]) if task[11] is not None else 1,
         }
     data_con.close()
 
@@ -720,6 +778,7 @@ def get_completed_task(
             "assign_id": task[8],
             "group_id": task[9],
             "completed": bool(task[10]),
+            "priority": int(task[11]) if task[11] is not None else 1,
         }
     data_con.close()
 

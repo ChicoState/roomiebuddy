@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import 'package:roomiebuddy/providers/theme_provider.dart';
 
 double getAppBarHeight() {
   return kToolbarHeight;
@@ -24,12 +26,24 @@ class TAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return AppBar(
       automaticallyImplyLeading: false,
       leading: showBackArrow
-          ? IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.arrow_back))
+          ? IconButton(
+              onPressed: () => Get.back(), 
+              icon: Icon(
+                Icons.arrow_back,
+                color: themeProvider.isDarkMode ? themeProvider.darkTextColor : themeProvider.lightTextColor,
+              ))
           : leadingIcon != null
-              ? IconButton(onPressed: leadingOnPressed, icon: Icon(leadingIcon))
+              ? IconButton(
+                  onPressed: leadingOnPressed, 
+                  icon: Icon(
+                    leadingIcon,
+                    color: themeProvider.isDarkMode ? themeProvider.darkTextColor : themeProvider.lightTextColor,
+                  ))
               : null,
       title: title != null
           ? FittedBox(
