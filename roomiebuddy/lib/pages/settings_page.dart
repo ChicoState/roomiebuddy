@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:roomiebuddy/providers/theme_provider.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:roomiebuddy/login_screen.dart';
+import 'package:roomiebuddy/pages/login_screen.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -168,7 +168,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               
                               // Navigate to login screen
                               Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                MaterialPageRoute(builder: (context) => const LoginScreen(clearCredentials: true)),
                                 (route) => false, // This removes all previous routes
                               );
                             },

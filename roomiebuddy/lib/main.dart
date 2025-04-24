@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:roomiebuddy/pages/login_screen.dart';
 import 'package:roomiebuddy/providers/theme_provider.dart';
-import 'package:roomiebuddy/splash_screen.dart';
 
 void main() {
   runApp(
@@ -14,17 +14,17 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp(
-          title: 'RommieBuddy',
-          debugShowCheckedModeBanner: false,
-          theme: themeProvider.themeData,
-          home: SplashScreen(),
-        );
-      }
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Roomie Buddy',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: const LoginScreen(clearCredentials: false), // Set to false to enable "remember me" functionality
     );
   }
 }

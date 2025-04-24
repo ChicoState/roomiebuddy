@@ -17,3 +17,6 @@ log/
 
 # ignore __pycache__
 backend/__pycache__
+
+# ignore .DS_Store
+.DS_Store

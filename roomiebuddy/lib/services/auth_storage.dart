@@ -1,0 +1,101 @@
+import 'package:shared_preferences/shared_preferences.dart';
+
+class AuthStorage {
+  // Keys for SharedPreferences
+  static const String _userIdKey = 'user_id';
+  static const String _emailKey = 'email';
+  static const String _passwordKey = 'password';
+  
+  // Singleton pattern implementation
+  static final AuthStorage _instance = AuthStorage._internal();
+  
+  factory AuthStorage() {
+    return _instance;
+  }
+  
+  AuthStorage._internal();
+  
+  // Store user credentials
+  Future<bool> storeUserCredentials(String userId, String email, String password) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userIdKey, userId);
+      await prefs.setString(_emailKey, email);
+      await prefs.setString(_passwordKey, password);
+      return true;
+    } catch (e) {
+      print('Error storing user credentials: $e');
+      return false;
+    }
+  }
+  
+  // Get user ID
+  Future<String?> getUserId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_userIdKey);
+    } catch (e) {
+      print('Error getting user ID: $e');
+      return null;
+    }
+  }
+  
+  // Get email
+  Future<String?> getEmail() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_emailKey);
+    } catch (e) {
+      print('Error getting email: $e');
+      return null;
+    }
+  }
+  
+  // Get password
+  Future<String?> getPassword() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_passwordKey);
+    } catch (e) {
+      print('Error getting password: $e');
+      return null;
+    }
+  }
+  
+  // Check if user is logged in
+  Future<bool> isLoggedIn() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Check if all required credentials are present
+      final userId = prefs.getString(_userIdKey);
+      final email = prefs.getString(_emailKey);
+      final password = prefs.getString(_passwordKey);
+      
+      // For development/debugging - remove or set to false in production
+      print("Auth check: UserId=$userId, Email=$email");
+      
+      // Ensure all values exist and aren't empty
+      return userId != null && userId.isNotEmpty && 
+             email != null && email.isNotEmpty && 
+             password != null && password.isNotEmpty;
+    } catch (e) {
+      print('Error checking login status: $e');
+      return false;
+    }
+  }
+  
+  // Clear user credentials (logout)
+  Future<bool> clearUserCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_userIdKey);
+      await prefs.remove(_emailKey);
+      await prefs.remove(_passwordKey);
+      return true;
+    } catch (e) {
+      print('Error clearing user credentials: $e');
+      return false;
+    }
+  }
+} 
