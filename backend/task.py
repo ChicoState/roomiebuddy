@@ -5,6 +5,8 @@ from datetime import datetime
 from sqlite3 import connect, Connection, Cursor, Error
 from uuid import uuid4
 
+from error import BackendError
+
 CREATE_TASK_TABLE: str = (
     "CREATE TABLE IF NOT EXISTS task"
     "(uuid TEXT PRIMARY KEY, name TEXT NOT NULL, "
@@ -30,12 +32,18 @@ CREATE_GROUP_USER_TABLE: str = (
     "(group_id TEXT NOT NULL, user_id TEXT NOT NULL, "
     "role_id TEXT);"
 )
-CREATE_GROUP_ROLES_TABLE: str = (
-    "CREATE TABLE IF NOT EXISTS group_roles"
-    "(group_id TEXT NOT NULL, uuid TEXT NOT NULL, "
-    "role_name TEXT NOT NULL, role_description TEXT, "
-    "role_permissions TEXT, admin INT NOT NULL);"
+# CREATE_GROUP_ROLES_TABLE: str = (
+#     "CREATE TABLE IF NOT EXISTS group_roles "
+#     "(group_id TEXT NOT NULL, uuid TEXT NOT NULL, "
+#     "role_name TEXT NOT NULL, role_description TEXT, "
+#     "role_permissions TEXT, admin INT NOT NULL);"
+# )
+CREATE_PENDING_INVITE_TABLE: str = (
+    "CREATE TABLE IF NOT EXISTS pending_invite "
+    "(group_id TEXT NOT NULL, user_id TEXT NOT NULL);"
 )
+
+# ---- Check Functions ----------------
 
 
 def check_table() -> Connection:
@@ -44,22 +52,27 @@ def check_table() -> Connection:
     try:
         data_con: Connection = connect("data/data.db")
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     data_cursor: Cursor = data_con.cursor()
     data_cursor.execute(CREATE_TASK_TABLE)
     data_cursor.execute(CREATE_USER_TABLE)
     data_cursor.execute(CREATE_GROUP_TABLE)
     data_cursor.execute(CREATE_GROUP_USER_TABLE)
+    data_cursor.execute(CREATE_PENDING_INVITE_TABLE)
 
     if (
         len(data_cursor.execute("SELECT * FROM task;").description) != 14
         or len(data_cursor.execute("SELECT * FROM user;").description) != 4
         or len(data_cursor.execute("SELECT * FROM task_group;").description) != 4
         or len(data_cursor.execute("SELECT * FROM group_user;").description) != 3
+        or len(data_cursor.execute("SELECT * FROM pending_invite;").description) != 2
     ):
         data_con.close()
-        raise Exception("User Database has not been configured successfully.")
+        raise BackendError(
+            "Backend Error: Not Been Configured Correctly, Ask Developers",
+            201,
+        )
 
     return data_con
 
@@ -129,6 +142,9 @@ def check_password(data_con: Connection, user_id: str, password: str) -> bool:
     return True
 
 
+# ---- User Functions ----------------
+
+
 def add_user(
     username: str,
     email: str,
@@ -139,22 +155,27 @@ def add_user(
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     user_id: str = str(uuid4())
     while check_id_exists(data_con, "user", user_id):
         user_id = str(uuid4())
 
     data_cursor.execute(
-        "SELECT * FROM user WHERE username = ? OR email = ?;",
-        (
-            username,
-            email,
-        ),
+        "SELECT * FROM user WHERE username = ?;",
+        (username,),
     )
     if len(data_cursor.fetchall()) != 0:
         data_con.close()
-        raise Exception("Username or Email already exists.")
+        raise BackendError("Backend Error: Username already exists", 101)
+
+    data_cursor.execute(
+        "SELECT * FROM user WHERE email = ?;",
+        (email,),
+    )
+    if len(data_cursor.fetchall()) != 0:
+        data_con.close()
+        raise BackendError("Backend Error: Email already exists", 102)
 
     data_cursor.execute(
         "INSERT INTO user VALUES (?, ?, ?, ?);",
@@ -196,10 +217,7 @@ def login_user(
 
 
 def edit_user(
-    user_id: str,
-    username: str,
-    email: str,
-    password: str,
+    user_id: str, username: str, email: str, password: str, new_password: str
 ):
     """Edits a user information."""
     try:
@@ -223,9 +241,13 @@ def edit_user(
         data_con.close()
         raise Exception("Username or Email already exists.")
 
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise Exception("Password is incorrect.")
+
     data_cursor.execute(
         "UPDATE user SET username = ?, email = ?, password = ? WHERE uuid = ?;",
-        (username, email, password, user_id),
+        (username, email, new_password, user_id),
     )
     return
 
@@ -279,6 +301,9 @@ def delete_user(
     data_con.commit()
     data_con.close()
     return
+
+
+# ---- Group Functions ----------------
 
 
 def create_group(
@@ -448,6 +473,9 @@ def get_group(
     return new_group_list
 
 
+# ---- Task Functions ----------------
+
+
 def add_task(
     task_name: str,
     task_description: str,
@@ -523,7 +551,7 @@ def edit_task(
     assigner_id: str,
     assign_id: str,
     group_id: str,
-    password: str
+    password: str,
 ) -> bool:
     """This will edit the task."""
     try:

@@ -1,0 +1,38 @@
+List of error codes that corresponds to the error messages in the backend.
+
+0: "Success"
+
+---------------
+Client error codes
+---------------
+
+100: "Invalid request"
+    The request is invalid. Most likely the reuqest was not used correctly. [POST]
+101: "Attribute Error"
+    The request is missing an attribute. Please check the request and try again.
+102: "Key Error"
+    The request is missing a key. Please check the request and try again.
+103: "Type Error"
+    The request has an invalid type. Please check the request and try again.
+110: "Missing Criteria"
+    Some of the criteria is empty. Please check the request and try again.
+
+199: "Generic Client Error"
+    The request is invalid. Most likely the reuqest was not used correctly.
+
+
+
+111: "Username Duplicate"
+    The username already exists. Please choose a different username.
+112: "Email Duplicate"
+    The email already exists. Please choose a different email.
+
+----------------
+Backend error codes
+----------------
+
+200: "Generic Backend Error"
+    Somethign went wrong in the backend, but we don't know what.
+
+201: "Backend Not Been configured correctly"
+    The backend has not been configured correctly. Please check the backend configuration.
