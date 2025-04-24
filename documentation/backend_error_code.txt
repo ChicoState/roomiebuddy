@@ -21,12 +21,6 @@ Client error codes
     The request is invalid. Most likely the reuqest was not used correctly.
 
 
-
-111: "Username Duplicate"
-    The username already exists. Please choose a different username.
-112: "Email Duplicate"
-    The email already exists. Please choose a different email.
-
 ----------------
 Backend error codes
 ----------------
@@ -36,3 +30,31 @@ Backend error codes
 
 201: "Backend Not Been configured correctly"
     The backend has not been configured correctly. Please check the backend configuration.
+
+
+----------------
+sqlite3 error codes
+----------------
+300: "sqlite3 error"
+    Somethign went wrong in the sqlite3 database, but we don't know what.
+301: "Username Duplicate"
+    The username already exists. Please choose a different username.
+302: "Email Duplicate"
+    The email already exists. Please choose a different email.
+303: "email or password is incorrect"
+    The email or password is incorrect. Please check the email and password and try again.
+304: "User not found"
+    The user was not found. Please check the email and password and try again.
+305: "Password is not correct"
+    The password is not correct. Please check the password and try again.
+    (The difference with 303 is that 303 is for login and 305 is for modifying data)
+306: "Group not found"
+    The group was not found. Please check the group id and try again.
+307: "User is already in the group"
+    The user is already in the group. Please check the group id and try again.
+308: "User is not the owner of the group"
+    The user is not the owner of the group. Please check the group id and try again.
+309: "Task does not exist"
+    The task does not exist. Please check the task id and try again.
+310: "User is not in the group"
+    The user is not in the group. Please check the group id and try again.

@@ -167,7 +167,7 @@ def add_user(
     )
     if len(data_cursor.fetchall()) != 0:
         data_con.close()
-        raise BackendError("Backend Error: Username already exists", 101)
+        raise BackendError("Backend Error: Username already exists", 301)
 
     data_cursor.execute(
         "SELECT * FROM user WHERE email = ?;",
@@ -175,7 +175,7 @@ def add_user(
     )
     if len(data_cursor.fetchall()) != 0:
         data_con.close()
-        raise BackendError("Backend Error: Email already exists", 102)
+        raise BackendError("Backend Error: Email already exists", 302)
 
     data_cursor.execute(
         "INSERT INTO user VALUES (?, ?, ?, ?);",
@@ -196,7 +196,7 @@ def login_user(
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     data_cursor.execute(
         "SELECT * FROM user WHERE email = ? AND password = ?;",
@@ -204,7 +204,7 @@ def login_user(
     )
     if len(data_cursor.fetchall()) == 0:
         data_con.close()
-        raise Exception("Email or Password is incorrect.")
+        raise BackendError("Backend Error: Email or Password is incorrect", 303)
 
     data_cursor.execute(
         "SELECT uuid FROM user WHERE email = ?;",
@@ -218,32 +218,37 @@ def login_user(
 
 def edit_user(
     user_id: str, username: str, email: str, password: str, new_password: str
-):
+) -> None:
     """Edits a user information."""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     if check_user_exists(data_con, user_id) is False:
         data_con.close()
-        raise Exception("User does not exist.")
+        raise BackendError("Backend Error: User does not exist", 304)
 
     data_cursor.execute(
-        "SELECT * FROM user WHERE username = ? OR email = ?;",
-        (
-            username,
-            email,
-        ),
+        "SELECT * FROM user WHERE username = ?;",
+        (username,),
     )
     if len(data_cursor.fetchall()) != 0:
         data_con.close()
-        raise Exception("Username or Email already exists.")
+        raise BackendError("Backend Error: Username already exists", 301)
+
+    data_cursor.execute(
+        "SELECT * FROM user WHERE email = ?;",
+        (email,),
+    )
+    if len(data_cursor.fetchall()) != 0:
+        data_con.close()
+        raise BackendError("Backend Error: Email already exists", 302)
 
     if check_password(data_con, user_id, password) is False:
         data_con.close()
-        raise Exception("Password is incorrect.")
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     data_cursor.execute(
         "UPDATE user SET username = ?, email = ?, password = ? WHERE uuid = ?;",
@@ -254,17 +259,22 @@ def edit_user(
 
 def delete_user(
     user_id: str,
+    password: str,
 ) -> None:
     """Deletes a user from the database."""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     if check_user_exists(data_con, user_id) is False:
         data_con.close()
-        raise Exception("User does not exist.")
+        raise BackendError("Backend Error: User does not exist", 304)
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     data_cursor.execute(
         "DELETE FROM user WHERE uuid = ?;",
@@ -310,17 +320,26 @@ def create_group(
     user_id: str,
     description: str,
     group_name: str,
+    password: str,
 ) -> None:
     """This will create a group."""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     group_id: str = str(uuid4())
     while check_id_exists(data_con, "group", group_id):
         group_id = str(uuid4())
+
+    if check_user_exists(data_con, user_id) is False:
+        data_con.close()
+        raise BackendError("Backend Error: User does not exist", 304)
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     data_cursor.execute(
         "INSERT INTO group VALUES (?, ?, ?, ?);",
@@ -340,25 +359,30 @@ def create_group(
 def add_user_to_group(
     user_id: str,
     group_id: str,
+    password: str,
 ) -> None:
     """Adds a user to a group."""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     if check_user_exists(data_con, user_id) is False:
         data_con.close()
-        raise Exception("User does not exist.")
+        raise BackendError("Backend Error: User does not exist", 304)
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     if check_group_exists(data_con, group_id) is False:
         data_con.close()
-        raise Exception("Group does not exist.")
+        raise BackendError("Backend Error: Group does not exist", 306)
 
     if check_user_in_group(data_con, user_id, group_id):
         data_con.close()
-        raise Exception("User is already in the group.")
+        raise BackendError("Backend Error: User already in group", 307)
 
     data_cursor.execute(
         "INSERT INTO group_user VALUES (?, ?);",
@@ -371,21 +395,26 @@ def add_user_to_group(
 def remove_user_from_group(
     user_id: str,
     group_id: str,
+    password: str,
 ) -> None:
     """Removes a user from a group."""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     if check_user_exists(data_con, user_id) is False:
         data_con.close()
-        raise Exception("User does not exist.")
+        raise BackendError("Backend Error: User does not exist", 304)
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     if check_group_exists(data_con, group_id) is False:
         data_con.close()
-        raise Exception("Group does not exist.")
+        raise BackendError("Backend Error: Group does not exist", 306)
 
     data_cursor.execute(
         "DELETE FROM group_user WHERE group_id = ? AND user_id = ?;",
@@ -398,21 +427,26 @@ def remove_user_from_group(
 def delete_group(
     user_id: str,
     group_id: str,
+    password: str,
 ) -> None:
     """Deletes a group."""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     if check_group_exists(data_con, group_id) is False:
         data_con.close()
-        raise Exception("Group does not exist.")
+        raise BackendError("Backend Error: Group does not exist", 306)
 
     if check_user_exists(data_con, user_id) is False:
         data_con.close()
-        raise Exception("User does not exist.")
+        raise BackendError("Backend Error: User does not exist in group", 304)
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     data_cursor.execute(
         "SELECT * FROM task_group WHERE uuid = ? AND owner_id = ?;",
@@ -421,7 +455,7 @@ def delete_group(
 
     if len(data_cursor.fetchall()) == 0:
         data_con.close()
-        raise Exception("User does not own the group.")
+        raise BackendError("Backend Error: User is not the owner of the group", 308)
 
     data_cursor.execute(
         "DELETE FROM task_group WHERE uuid = ?;",
@@ -445,15 +479,15 @@ def get_group(
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     if check_user_exists(data_con, user_id) is False:
         data_con.close()
-        raise Exception("User does not exist.")
+        raise BackendError("Backend Error: User does not exist", 304)
 
     if check_password(data_con, user_id, password) is False:
         data_con.close()
-        raise Exception("Password is incorrect.")
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     data_cursor.execute(
         "SELECT * FROM group_user WHERE user_id = ?;",
@@ -489,7 +523,7 @@ def add_task(
     recursive: int,
     priority: int,
     image_path: str,
-    password: str = "",
+    password: str,
 ) -> None:
     """This will add the task."""
 
@@ -497,19 +531,22 @@ def add_task(
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     if (
         check_user_exists(data_con, assigner_id) is False
         or check_user_exists(data_con, assign_id) is False
-        or (group_id != "0" and check_group_exists(data_con, group_id) is False)
     ):
         data_con.close()
-        raise Exception("User or Group does not exist.")
+        raise BackendError("Backend Error: User does not exist", 304)
+
+    if group_id != "0" and check_group_exists(data_con, group_id) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Group does not exist", 306)
 
     if check_password(data_con, assigner_id, password) is False:
         data_con.close()
-        raise Exception("Password is incorrect.")
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     task_id: str = str(uuid4())
     while check_id_exists(data_con, "task", task_id):
@@ -551,6 +588,10 @@ def edit_task(
     assigner_id: str,
     assign_id: str,
     group_id: str,
+    recursive: int,
+    priority: int,
+    completed: int,
+    image_path: str,
     password: str,
 ) -> bool:
     """This will edit the task."""
@@ -558,27 +599,31 @@ def edit_task(
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     if check_task_exists(data_con, task_id) is False:
         data_con.close()
-        raise Exception("Task does not exist.")
+        raise BackendError("Backend Error: Task does not exist", 309)
 
     if (
         check_user_exists(data_con, assigner_id) is False
         or check_user_exists(data_con, assign_id) is False
-        or (group_id != "0" and check_group_exists(data_con, group_id) is False)
     ):
         data_con.close()
-        raise Exception("User or Group does not exist.")
+        raise BackendError("Backend Error: User does not exist", 304)
+
+    if group_id != "0" and check_group_exists(data_con, group_id) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Group does not exist", 306)
 
     if check_password(data_con, assigner_id, password) is False:
         data_con.close()
-        raise Exception("Password is incorrect.")
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     data_cursor.execute(
         "UPDATE task SET name = ?, description = ?, due = ?, est_day = ?, "
         "est_hour = ?, est_min = ?, assigner_uuid = ?, assign_uuid = ?, group_id = ? "
+        "recursive = ?, priority = ?, image_path = ? completed = ? "
         "WHERE uuid = ?;",
         (
             task_name,
@@ -590,6 +635,10 @@ def edit_task(
             assigner_id,
             assign_id,
             group_id,
+            recursive,
+            priority,
+            image_path,
+            completed,
             task_id,
         ),
     )
@@ -609,15 +658,15 @@ def delete_task(
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     if check_task_exists(data_con, task_id) is False:
         data_con.close()
-        raise Exception("Task does not exist.")
+        raise BackendError("Backend Error: Task does not exist", 309)
 
     if check_password(data_con, user_id, password) is False:
         data_con.close()
-        raise Exception("Password is incorrect.")
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     data_cursor.execute("DELETE FROM task WHERE uuid = ?;", (task_id,))
     data_con.commit()
@@ -632,15 +681,15 @@ def get_user_task(user_id: str, password: str) -> dict[str, dict]:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
     if check_user_exists(data_con, user_id) is False:
         data_con.close()
-        raise Exception("User does not exist.")
+        raise BackendError("Backend Error: User does not exist", 304)
 
     if check_password(data_con, user_id, password) is False:
         data_con.close()
-        raise Exception("Password is incorrect.")
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     data_cursor.execute("SELECT * FROM task WHERE assign_uuid = ?;", (user_id,))
 
@@ -669,23 +718,30 @@ def get_user_task(user_id: str, password: str) -> dict[str, dict]:
 def get_group_task(
     user_id: str,
     group_id: str,
+    password: str,
 ) -> dict[str, dict]:
     """This will get the task from the user."""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
-    if (
-        check_user_exists(data_con, user_id) is False
-        or check_group_exists(data_con, group_id) is False
-        or check_user_in_group(data_con, user_id, group_id) is False
-    ):
+    if check_user_exists(data_con, user_id) is False:
         data_con.close()
-        raise Exception(
-            "User does not exist or Group does not exist or User is not in the group."
-        )
+        raise BackendError("Backend Error: User does not exist", 304)
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Password is incorrect", 305)
+
+    if check_group_exists(data_con, group_id) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Group does not exist", 306)
+
+    if check_user_in_group(data_con, user_id, group_id) is False:
+        data_con.close()
+        raise BackendError("Backend Error: User is not in the group", 310)
 
     data_cursor.execute(
         "SELECT * FROM task WHERE group_id = ?;",
@@ -713,23 +769,38 @@ def get_group_task(
 
 def get_completed_task(
     user_id: str,
+    group_id: str,
+    password: str,
 ) -> dict[str, dict]:
     """This will get the completed task from the user."""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
+
     if check_user_exists(data_con, user_id) is False:
         data_con.close()
-        raise Exception("User does not exist.")
+        raise BackendError("Backend Error: User does not exist", 304)
+
+    if check_group_exists(data_con, group_id) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Group does not exist", 306)
+
+    if check_user_in_group(data_con, user_id, group_id) is False:
+        data_con.close()
+        raise BackendError("Backend Error: User is not in the group", 310)
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Password is incorrect", 305)
 
     data_cursor.execute(
         "SELECT * FROM task WHERE assign_id = ? "
         "OR group_id IN (SELECT group_id FROM group_user WHERE user_id = ?) "
         "AND completed = 1;",
         (
-            user_id,
+            group_id,
             user_id,
         ),
     )
@@ -754,42 +825,42 @@ def get_completed_task(
     return new_task_list
 
 
-def complete_task(
+def toggle_complete_task(
     task_id: str,
+    user_id: str,
+    password: str,
+    completed: int,
 ) -> None:
     """This will complete the task."""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise e_msg
+        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
+
+    if check_user_exists(data_con, user_id) is False:
+        data_con.close()
+        raise BackendError("Backend Error: User does not exist", 304)
+
+    if check_password(data_con, user_id, password) is False:
+        data_con.close()
+        raise BackendError("Backend Error: Password is incorrect", 305)
+
+    if check_user_in_group(data_con, user_id, task_id) is False:
+        data_con.close()
+        raise BackendError("Backend Error: User is not in the group", 310)
 
     if check_task_exists(data_con, task_id) is False:
         data_con.close()
-        raise Exception("Task does not exist.")
+        raise BackendError("Backend Error: Task does not exist", 309)
 
-    data_cursor.execute("UPDATE task SET completed = 1 WHERE uuid = ?;", (task_id,))
-    data_con.commit()
-    data_con.close()
-
-    return
-
-
-def uncomplete_task(
-    task_id: str,
-) -> None:
-    """This will uncomplete the task."""
-    try:
-        data_con: Connection = check_table()
-        data_cursor: Cursor = data_con.cursor()
-    except Error as e_msg:
-        raise e_msg
-
-    if check_task_exists(data_con, task_id) is False:
-        data_con.close()
-        raise Exception("Task does not exist.")
-
-    data_cursor.execute("UPDATE task SET completed = 0 WHERE uuid = ?;", (task_id,))
+    data_cursor.execute(
+        "UPDATE task SET completed = ? WHERE uuid = ?;",
+        (
+            completed,
+            task_id,
+        ),
+    )
     data_con.commit()
     data_con.close()
 

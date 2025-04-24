@@ -12,6 +12,7 @@ from task import (
     add_user,
     login_user,
     edit_user,
+    delete_user,
     edit_task,
     delete_task,
     get_user_task,
@@ -325,6 +326,91 @@ def handle_edit_user() -> Response:
     return response_json
 
 
+@app.route("/delete_user", methods=["POST"])
+def handle_delete_user() -> Response:
+    """Delete a user."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "100", "message": "Wrong request type"}])
+        return response_json
+    try:
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        password: str = request_data.get("password", "")
+    except AttributeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "101",
+                    "message": "Invalid data format! Please check your request. (AttributeError)",
+                }
+            ]
+        )
+        return response_json
+    except KeyError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "102",
+                    "message": "Invalid data format! Please check your request. (KeyError)",
+                }
+            ]
+        )
+        return response_json
+    except TypeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "103",
+                    "message": "Invalid data format! Please check your request. (TypeError)",
+                }
+            ]
+        )
+        return response_json
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "199", "message": "Failed to retrive data from request!"}]
+        )
+        make_new_log("delete_user", e)
+        return response_json
+
+    if user_id == "" or password == "":
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "110",
+                    "message": "One or more of the required fields are empty!",
+                }
+            ]
+        )
+        return response_json
+
+    try:
+        delete_user(
+            user_id=user_id,
+            password=password,
+        )
+    except BackendError as e:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": e.error_code,
+                    "message": e.message,
+                }
+            ]
+        )
+        return response_json
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "200", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("delete_user", e)
+        return response_json
+
+    response_json = jsonify([{"error_no": "0", "message": "success"}])
+    return response_json
+
+
 # ----- Task Handlers ----
 
 
@@ -470,6 +556,9 @@ def handle_edit_task() -> Response:
         assigner_id: str = request_data.get("assigner_id", "")
         assign_id: str = request_data.get("assign_id", "")
         group_id: str = request_data.get("group_id", "")
+        recursive: int = int(request_data.get("recursive", "0"))
+        priority: int = int(request_data.get("priority", "0"))
+        completed: int = int(request_data.get("completed", "0"))
         password: str = request_data.get("password", "")
 
         task_due: float = datetime(
@@ -535,6 +624,10 @@ def handle_edit_task() -> Response:
             assigner_id=assigner_id,
             assign_id=assign_id,
             group_id=group_id,
+            recursive=recursive,
+            priority=priority,
+            completed=completed,
+            image_path="TODO CHANGE HERE",
             password=password,
         )
     except BackendError as e:
