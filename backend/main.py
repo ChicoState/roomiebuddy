@@ -1174,6 +1174,7 @@ def handle_respond_to_invite() -> Response:
     response_json = jsonify([{"error_no": "0", "message": f"Successfully {status} invitation"}])
     return response_json
 
+
 if __name__ == "__main__":
     print("Running main.py")
     make_new_log("main", "Server started")  # type: ignore
