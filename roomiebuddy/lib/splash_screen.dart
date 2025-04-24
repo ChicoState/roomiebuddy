@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 //import 'package:roomiebuddy/NavScreen.dart';
-import 'package:roomiebuddy/login_screen.dart';
+import 'package:roomiebuddy/pages/login_screen.dart';
 // import 'package:myapp/main.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:provider/provider.dart';

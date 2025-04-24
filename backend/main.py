@@ -382,6 +382,7 @@ def handle_get_group_list() -> Response:
     return response_json
 
 
+
 if __name__ == "__main__":
     print("Running main.py")
     make_new_log("main", "Server started")  # type: ignore
