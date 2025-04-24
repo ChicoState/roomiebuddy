@@ -1,6 +1,0 @@
-List of error codes that corresponds to the error messages in the backend.
-
-0: "Success"
-1: "Invalid request"
-2: "Backend Error"
-3: "Not enough information"
