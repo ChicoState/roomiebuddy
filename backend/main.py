@@ -1,17 +1,22 @@
 # coding: utf-8
 """This file will create the server and accept the backend processes."""
 
-from os.path import join
+# from os.path import join
 from datetime import datetime
 from flask import Flask, request, jsonify, Response
+
+# from werkzeug.utils import secure_filename
+
 from task import (
     add_task,
     add_user,
     login_user,
+    edit_user,
+    delete_user,
     edit_task,
     delete_task,
     get_user_task,
-    get_group,
+    get_group
     create_group,
     leave_group,
     delete_group,
@@ -23,6 +28,7 @@ from task import (
 from werkzeug.utils import secure_filename
 from sqlite3 import connect
 
+from error import BackendError
 from log import make_new_log
 
 app: Flask = Flask(__name__)
@@ -44,12 +50,15 @@ def handle_root() -> Response:
     respose_json: Response = jsonify(
         [
             {
+                "error_no": "0",
                 "message": "This is a debug message, yes, the server is running.",
-                "success": True,
             }
         ]
     )
     return respose_json
+
+
+# ----- User Handlers ----
 
 
 @app.route("/signup", methods=["POST"])
@@ -57,31 +66,81 @@ def handle_signup() -> Response:
     """Adds a new user to the database."""
     response_json: Response
     if request.method != "POST":
-        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        response_json = jsonify([{"error_no": "100", "message": "Wrong request type"}])
         return response_json
     try:
         request_data: dict = request.get_json()
         username: str = request_data.get("username", "")
         email: str = request_data.get("email", "")
         password: str = request_data.get("password", "")
+    except AttributeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "101",
+                    "message": "Invalid data format! Please check your request. (AttributeError)",
+                }
+            ]
+        )
+        return response_json
+    except KeyError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "102",
+                    "message": "Invalid data format! Please check your request. (KeyError)",
+                }
+            ]
+        )
+        return response_json
+    except TypeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "103",
+                    "message": "Invalid data format! Please check your request. (TypeError)",
+                }
+            ]
+        )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [{"error_no": "199", "message": "Failed to retrive data from request!"}]
         )
         make_new_log("signup", e)
         return response_json
 
     if username == "" or email == "" or password == "":
         response_json = jsonify(
-            [{"error_no": "3", "message": "Given data is invalid!"}]
+            [
+                {
+                    "error_no": "110",
+                    "message": "One or more of the required fields are empty!",
+                }
+            ]
         )
         return response_json
 
     try:
         user_id: str = add_user(username=username, email=email, password=password)
+    except BackendError as e:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": e.error_code,
+                    "message": e.message,
+                }
+            ]
+        )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [
+                {
+                    "error_no": "200",
+                    "message": "Trouble with backend! Sorry, but please notify the devs!",
+                }
+            ]
         )
         make_new_log("signup", e)
         return response_json
@@ -97,30 +156,80 @@ def handle_login() -> Response:
     """Login a user."""
     response_json: Response
     if request.method != "POST":
-        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        response_json = jsonify([{"error_no": "100", "message": "Wrong request type"}])
         return response_json
     try:
         request_data: dict = request.get_json()
         email: str = request_data.get("email", "")
         password: str = request_data.get("password", "")
+    except AttributeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "101",
+                    "message": "Invalid data format! Please check your request. (AttributeError)",
+                }
+            ]
+        )
+        return response_json
+    except KeyError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "102",
+                    "message": "Invalid data format! Please check your request. (KeyError)",
+                }
+            ]
+        )
+        return response_json
+    except TypeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "103",
+                    "message": "Invalid data format! Please check your request. (TypeError)",
+                }
+            ]
+        )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [{"error_no": "199", "message": "Failed to retrive data from request!"}]
         )
         make_new_log("login", e)
         return response_json
 
     if email == "" or password == "":
         response_json = jsonify(
-            [{"error_no": "3", "message": "Given data is invalid!"}]
+            [
+                {
+                    "error_no": "110",
+                    "message": "One or more of the required fields are empty!",
+                }
+            ]
         )
         return response_json
 
     try:
         user_id: str = login_user(email=email, password=password)
+    except BackendError as e:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": e.error_code,
+                    "message": e.message,
+                }
+            ]
+        )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [
+                {
+                    "error_no": "200",
+                    "message": "Trouble with backend! Sorry, but please notify the devs!",
+                }
+            ]
         )
         make_new_log("login", e)
         return response_json
@@ -131,12 +240,196 @@ def handle_login() -> Response:
     return response_json
 
 
+@app.route("/edit_user", methods=["POST"])
+def handle_edit_user() -> Response:
+    """Edit a user."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "100", "message": "Wrong request type"}])
+        return response_json
+    try:
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        username: str = request_data.get("username", "")
+        email: str = request_data.get("email", "")
+        password: str = request_data.get("password", "")
+        new_password: str = request_data.get("new_password", "")
+    except AttributeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "101",
+                    "message": "Invalid data format! Please check your request. (AttributeError)",
+                }
+            ]
+        )
+        return response_json
+    except KeyError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "102",
+                    "message": "Invalid data format! Please check your request. (KeyError)",
+                }
+            ]
+        )
+        return response_json
+    except TypeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "103",
+                    "message": "Invalid data format! Please check your request. (TypeError)",
+                }
+            ]
+        )
+        return response_json
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "199", "message": "Failed to retrive data from request!"}]
+        )
+        make_new_log("edit_user", e)
+        return response_json
+
+    if username == "" or email == "" or password == "" or user_id == "":
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "110",
+                    "message": "One or more of the required fields are empty!",
+                }
+            ]
+        )
+        return response_json
+
+    try:
+        edit_user(
+            user_id=user_id,
+            username=username,
+            email=email,
+            password=password,
+            new_password=new_password,
+        )
+    except BackendError as e:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": e.error_code,
+                    "message": e.message,
+                }
+            ]
+        )
+        return response_json
+    except Exception as e:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "200",
+                    "message": "Trouble with backend! Sorry, but please notify the devs!",
+                }
+            ]
+        )
+        make_new_log("edit_user", e)
+        return response_json
+
+    response_json = jsonify([{"error_no": "0", "message": "success"}])
+    return response_json
+
+
+@app.route("/delete_user", methods=["POST"])
+def handle_delete_user() -> Response:
+    """Delete a user."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "100", "message": "Wrong request type"}])
+        return response_json
+    try:
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        password: str = request_data.get("password", "")
+    except AttributeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "101",
+                    "message": "Invalid data format! Please check your request. (AttributeError)",
+                }
+            ]
+        )
+        return response_json
+    except KeyError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "102",
+                    "message": "Invalid data format! Please check your request. (KeyError)",
+                }
+            ]
+        )
+        return response_json
+    except TypeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "103",
+                    "message": "Invalid data format! Please check your request. (TypeError)",
+                }
+            ]
+        )
+        return response_json
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "199", "message": "Failed to retrive data from request!"}]
+        )
+        make_new_log("delete_user", e)
+        return response_json
+
+    if user_id == "" or password == "":
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "110",
+                    "message": "One or more of the required fields are empty!",
+                }
+            ]
+        )
+        return response_json
+
+    try:
+        delete_user(
+            user_id=user_id,
+            password=password,
+        )
+    except BackendError as e:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": e.error_code,
+                    "message": e.message,
+                }
+            ]
+        )
+        return response_json
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "200", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("delete_user", e)
+        return response_json
+
+    response_json = jsonify([{"error_no": "0", "message": "success"}])
+    return response_json
+
+
+# ----- Task Handlers ----
+
+
 @app.route("/add_task", methods=["POST"])
 def handle_add_task() -> Response:
     """Adds a new task to the database."""
     response_json: Response
     if request.method != "POST":
-        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        response_json = jsonify([{"error_no": "100", "message": "Wrong request type"}])
         return response_json
     try:
         request_data: dict = request.get_json()
@@ -165,16 +458,51 @@ def handle_add_task() -> Response:
         # if image_file and image_file.filename != "":
         #     file_name: str = secure_filename(image_file.filename)
         #     image_file.save(join(app.config["UPLOAD_FOLDER"], file_name))
+    except AttributeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "101",
+                    "message": "Invalid data format! Please check your request. (AttributeError)",
+                }
+            ]
+        )
+        return response_json
+    except KeyError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "102",
+                    "message": "Invalid data format! Please check your request. (KeyError)",
+                }
+            ]
+        )
+        return response_json
+    except TypeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "103",
+                    "message": "Invalid data format! Please check your request. (TypeError)",
+                }
+            ]
+        )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [{"error_no": "199", "message": "Failed to retrive data from request!"}]
         )
         make_new_log("add_task", e)
         return response_json
 
     if task_name == "" or assigner_id == "" or assign_id == "" or group_id == "":
         response_json = jsonify(
-            [{"error_no": "3", "message": "Given data is invalid!"}]
+            [
+                {
+                    "error_no": "110",
+                    "message": "One or more of the required fields are empty!",
+                }
+            ]
         )
         return response_json
 
@@ -194,9 +522,19 @@ def handle_add_task() -> Response:
             image_path=file_name,
             password=password,
         )
+    except BackendError as e:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": e.error_code,
+                    "message": e.message,
+                }
+            ]
+        )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [{"error_no": "200", "message": "Trouble with backend! Sorry!"}]
         )
         make_new_log("add_task", e)
         return response_json
@@ -210,7 +548,7 @@ def handle_edit_task() -> Response:
     """Edits a task."""
     response_json: Response
     if request.method != "POST":
-        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        response_json = jsonify([{"error_no": "100", "message": "Wrong request type"}])
         return response_json
     try:
         request_data: dict = request.get_json()
@@ -228,21 +566,59 @@ def handle_edit_task() -> Response:
         assigner_id: str = request_data.get("assigner_id", "")
         assign_id: str = request_data.get("assign_id", "")
         group_id: str = request_data.get("group_id", "")
+        recursive: int = int(request_data.get("recursive", "0"))
+        priority: int = int(request_data.get("priority", "0"))
+        completed: int = int(request_data.get("completed", "0"))
         password: str = request_data.get("password", "")
 
         task_due: float = datetime(
             task_due_year, task_due_month, task_due_date, task_due_hour, task_due_min, 0
         ).timestamp()
+    except AttributeError:
+        response_json = jsonify(
+            [
+                {
+                    "message": "Invalid data format! Please check your request. (AttributeError)",
+                    "error_no": "101",
+                }
+            ]
+        )
+        return response_json
+    except KeyError:
+        response_json = jsonify(
+            [
+                {
+                    "message": "Invalid data format! Please check your request. (KeyError)",
+                    "error_no": "102",
+                }
+            ]
+        )
+        return response_json
+    except TypeError:
+        response_json = jsonify(
+            [
+                {
+                    "message": "Invalid data format! Please check your request. (TypeError)",
+                    "error_no": "103",
+                }
+            ]
+        )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"message": f"There was an error! {e}", "error_no": "2"}]
+            [{"error_no": "199", "message": "Failed to retrive data from request!"}]
         )
         print(e)
         return response_json
 
-    if task_name == "" or assigner_id == "" or assign_id == "":
+    if task_name == "" or assigner_id == "" or assign_id == "" or password == "":
         response_json = jsonify(
-            [{"message": "Given data is invalid!", "error_no": "3"}]
+            [
+                {
+                    "message": "One or more of the required fields are empty!",
+                    "error_no": "110",
+                }
+            ]
         )
         return response_json
 
@@ -258,11 +634,18 @@ def handle_edit_task() -> Response:
             assigner_id=assigner_id,
             assign_id=assign_id,
             group_id=group_id,
+            recursive=recursive,
+            priority=priority,
+            completed=completed,
+            image_path="TODO CHANGE HERE",
             password=password,
         )
+    except BackendError as e:
+        response_json = jsonify([{"message": e.message, "error_no": e.error_code}])
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"message": f"Trouble with backend! Sorry! {e}", "error_no": "2"}]
+            [{"error_no": "200", "message": "Trouble with backend! Sorry!"}]
         )
         print(e)
         return response_json
@@ -277,23 +660,58 @@ def handle_delete_task() -> Response:
     """Delete a task."""
     response_json: Response
     if request.method != "POST":
-        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        response_json = jsonify([{"error_no": "100", "message": "Wrong request type"}])
         return response_json
     try:
         request_data: dict = request.get_json()
         task_id: str = request_data.get("task_id", "")
         user_id: str = request_data.get("user_id", "")
         password: str = request_data.get("password", "")
+    except AttributeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "101",
+                    "message": "Invalid data format! Please check your request. (AttributeError)",
+                }
+            ]
+        )
+        return response_json
+    except KeyError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "102",
+                    "message": "Invalid data format! Please check your request. (KeyError)",
+                }
+            ]
+        )
+        return response_json
+    except TypeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "103",
+                    "message": "Invalid data format! Please check your request. (TypeError)",
+                }
+            ]
+        )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [{"error_no": "199", "message": "Failed to retrive data from request!"}]
         )
         make_new_log("delete_task", e)
         return response_json
 
-    if task_id == "":
+    if task_id == "" or user_id == "" or password == "":
         response_json = jsonify(
-            [{"error_no": "3", "message": "Given data is invalid!"}]
+            [
+                {
+                    "error_no": "110",
+                    "message": "One or more of the required fields are empty!",
+                }
+            ]
         )
         return response_json
 
@@ -303,9 +721,19 @@ def handle_delete_task() -> Response:
             task_id=task_id,
             password=password,
         )
+    except BackendError as e:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": e.error_code,
+                    "message": e.message,
+                }
+            ]
+        )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [{"error_no": "200", "message": "Trouble with backend! Sorry!"}]
         )
         make_new_log("delete_task", e)
         return response_json
@@ -319,33 +747,75 @@ def handle_get_user_task() -> Response:
     """Get all tasks for a user."""
     response_json: Response
     if request.method != "POST":
-        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        response_json = jsonify([{"error_no": "100", "message": "Wrong request type"}])
         return response_json
     try:
         request_data: dict = request.get_json()
         user_id: str = request_data.get("user_id", "")
         password: str = request_data.get("password", "")
+    except AttributeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "101",
+                    "message": "Invalid data format! Please check your request. (AttributeError)",
+                }
+            ]
+        )
+        return response_json
+    except KeyError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "102",
+                    "message": "Invalid data format! Please check your request. (KeyError)",
+                }
+            ]
+        )
+        return response_json
+    except TypeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "103",
+                    "message": "Invalid data format! Please check your request. (TypeError)",
+                }
+            ]
+        )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [{"error_no": "199", "message": "Failed to retrive data from request!"}]
         )
         make_new_log("get_user_task", e)
         return response_json
 
-    if user_id == "":
+    if user_id == "" or password == "":
         response_json = jsonify(
-            [{"error_no": "3", "message": "Given data is invalid!"}]
+            [
+                {
+                    "error_no": "110",
+                    "message": "One or more of the required fields are empty!",
+                }
+            ]
         )
         return response_json
 
     try:
-        tasks: dict[str, dict] = get_user_task(
-            user_id=user_id,
-            password=password
+        tasks: dict[str, dict] = get_user_task(user_id=user_id, password=password)
+    except BackendError as e:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": e.error_code,
+                    "message": e.message,
+                }
+            ]
         )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [{"error_no": "200", "message": "Trouble with backend! Sorry!"}]
         )
         make_new_log("get_user_task", e)
         return response_json
@@ -354,27 +824,65 @@ def handle_get_user_task() -> Response:
     return response_json
 
 
+# ----- Group Handlers ----
+
+
 @app.route("/get_group_list", methods=["POST"])
 def handle_get_group_list() -> Response:
     """Get all groups for a user."""
     response_json: Response
     if request.method != "POST":
-        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        response_json = jsonify([{"error_no": "100", "message": "Wrong request type"}])
         return response_json
     try:
         request_data: dict = request.get_json()
         user_id: str = request_data.get("user_id", "")
         password: str = request_data.get("password", "")
+    except AttributeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "101",
+                    "message": "Invalid data format! Please check your request. (AttributeError)",
+                }
+            ]
+        )
+        return response_json
+    except KeyError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "102",
+                    "message": "Invalid data format! Please check your request. (KeyError)",
+                }
+            ]
+        )
+        return response_json
+    except TypeError:
+        response_json = jsonify(
+            [
+                {
+                    "error_no": "103",
+                    "message": "Invalid data format! Please check your request. (TypeError)",
+                }
+            ]
+        )
+        return response_json
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [{"error_no": "199", "message": "Failed to retrive data from request!"}]
         )
         make_new_log("get_user_task", e)
         return response_json
 
-    if user_id == "":
+    if user_id == "" or password == "":
         response_json = jsonify(
-            [{"error_no": "3", "message": "Given data is invalid!"}]
+            [
+                {
+                    "error_no": "110",
+                    "message": "One or more of the required fields are empty!",
+                }
+            ]
         )
         return response_json
 
@@ -382,7 +890,7 @@ def handle_get_group_list() -> Response:
         groups: dict[str, dict] = get_group(user_id=user_id, password=password)
     except Exception as e:
         response_json = jsonify(
-            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+            [{"error_no": "200", "message": "Trouble with backend! Sorry!"}]
         )
         make_new_log("get_user_task", e)
         return response_json
@@ -521,6 +1029,9 @@ def handle_delete_group() -> Response:
     return response_json
 
 
+ # ----- Invite Handlers ----
+  
+  
 @app.route("/invite_to_group", methods=["POST"])
 def handle_invite_to_group() -> Response:
     """Invite a user to join a group."""
@@ -663,7 +1174,6 @@ def handle_respond_to_invite() -> Response:
     response_json = jsonify([{"error_no": "0", "message": f"Successfully {status} invitation"}])
     return response_json
 
-
 if __name__ == "__main__":
     print("Running main.py")
     make_new_log("main", "Server started")  # type: ignore
@@ -674,4 +1184,3 @@ if __name__ == "__main__":
     except Exception as e:
         print("There was a problem setting up the server here is the error info:")
         print(e)
-        exit(-1)

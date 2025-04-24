@@ -29,11 +29,15 @@ CREATE_GROUP_USER_TABLE: str = (
     "(group_id TEXT NOT NULL, user_id TEXT NOT NULL, "
     "role_id TEXT);"
 )
-CREATE_GROUP_ROLES_TABLE: str = (
-    "CREATE TABLE IF NOT EXISTS group_roles"
-    "(group_id TEXT NOT NULL, uuid TEXT NOT NULL, "
-    "role_name TEXT NOT NULL, role_description TEXT, "
-    "role_permissions TEXT, admin INT NOT NULL);"
+# CREATE_GROUP_ROLES_TABLE: str = (
+#     "CREATE TABLE IF NOT EXISTS group_roles"
+#     "(group_id TEXT NOT NULL, uuid TEXT NOT NULL, "
+#     "role_name TEXT NOT NULL, role_description TEXT, "
+#     "role_permissions TEXT, admin INT NOT NULL);"
+# )
+CREATE_PENDING_INVITE_TABLE: str = (
+    "CREATE TABLE IF NOT EXISTS pending_invite "
+    "(group_id TEXT NOT NULL, user_id TEXT NOT NULL);"
 )
 
 
@@ -117,6 +121,21 @@ def delete_dummy_group():
     conn.close()
 
 
+def delete_tasks() -> None:
+    """This will delete everything in the task table. DANGER!"""
+
+    try:
+        data_con: Connection = check_table()
+        data_cursor: Cursor = data_con.cursor()
+    except Error as e_msg:
+        raise e_msg
+
+    data_cursor.execute("DELETE FROM task;")
+    data_con.commit()
+    data_con.close()
+    return
+
+
 def delete_everything() -> None:
     """This will delete everything in the task table. DANGER!"""
 
@@ -144,13 +163,13 @@ def check_table() -> Connection:
         raise e_msg
 
     data_cursor: Cursor = data_con.cursor()
-    print(CREATE_TASK_TABLE)
+    # print(CREATE_TASK_TABLE)
     data_cursor.execute(CREATE_TASK_TABLE)
-    print(CREATE_USER_TABLE)
+    # print(CREATE_USER_TABLE)
     data_cursor.execute(CREATE_USER_TABLE)
-    print(CREATE_GROUP_TABLE)
+    # print(CREATE_GROUP_TABLE)
     data_cursor.execute(CREATE_GROUP_TABLE)
-    print(CREATE_GROUP_USER_TABLE)
+    # print(CREATE_GROUP_USER_TABLE)
     data_cursor.execute(CREATE_GROUP_USER_TABLE)
 
     if (
@@ -171,7 +190,10 @@ def check_table() -> Connection:
 if __name__ == "__main__":
     # prompt the user for action
     check_table()
-    action = input("Do you want to create or delete a dummy user? ([c]reate/[d]elete): ")
+    action = input(
+        "Do you want to create or delete a dummy user? Or do you want to delete the tasks? "
+        "([c]reate/[d]elete/[t]asks): "
+    )
     if action[0] == "c":
         create_dummy_user()
         create_dummy_group()
@@ -180,5 +202,8 @@ if __name__ == "__main__":
         delete_dummy_user()
         delete_dummy_group()
         print("Dummy user deleted.")
+    elif action[0] == "t":
+        delete_tasks()
+        print("All tasks deleted.")
     else:
-        print("Invalid action. Please enter 'create' or 'delete'.")
+        print("Invalid action. Please enter 'create', 'delete', or 'tasks'.")
