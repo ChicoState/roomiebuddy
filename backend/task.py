@@ -53,7 +53,7 @@ def check_table() -> Connection:
     """This will check if the task table exists."""
 
     try:
-        data_con: Connection = connect("../data/data.db")
+        data_con: Connection = connect("data/data.db")
     except Error as e_msg:
         raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
