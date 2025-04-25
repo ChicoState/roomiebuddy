@@ -10,12 +10,12 @@ class ThemeProvider extends ChangeNotifier {
   Color get successColor => Colors.green;
   
   // Global colors (Light Mode)
-  Color get lightBackground => Colors.white;
-  Color get lightCardBackground => Colors.white;
+  Color get lightBackground => Colors.grey[300]!;
+  Color get lightCardBackground => Colors.grey[50]!;
   Color get lightTextColor => Colors.black;
   Color get lightTextSecondary => Colors.grey[700]!;
   Color get lightBorder => Colors.grey[300]!;
-  Color get lightInputFill => Colors.white;
+  Color get lightInputFill => Colors.grey[100]!;
   
   // Global colors (Dark Mode)
   Color get darkBackground => Colors.grey[850]!;
@@ -46,7 +46,7 @@ class ThemeProvider extends ChangeNotifier {
   bool get isDarkMode => _isDarkMode;
   Color get themeColor => _themeColor;
   Color get currentBackground => _isDarkMode ? darkBackground : lightBackground;
-  Color get currentCardBackground => _isDarkMode ? darkCardBackground : lightCardBackground;
+  Color get currentCardBackground => _isDarkMode ? darkCardBackground : lightBackground;
   Color get currentTextColor => _isDarkMode ? darkTextColor : lightTextColor;
   Color get currentSecondaryTextColor => _isDarkMode ? darkTextSecondary : lightTextSecondary;
   Color get currentBorderColor => _isDarkMode ? darkBorder : lightBorder;

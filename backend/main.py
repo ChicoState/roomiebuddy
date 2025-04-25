@@ -16,7 +16,7 @@ from task import (
     edit_task,
     delete_task,
     get_user_task,
-    get_group
+    get_group,
     create_group,
     leave_group,
     delete_group,
