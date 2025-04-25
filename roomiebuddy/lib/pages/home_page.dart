@@ -165,7 +165,7 @@ class HomePageState extends State<HomePage> {
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: themeProvider.lightTextColor,
+                          color: themeProvider.currentTextColor,
                         ),
                       ),
                     ),
@@ -177,11 +177,16 @@ class HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('My Tasks',
-                    style:
-                        TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'My Tasks',
+                  style: TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                    color: themeProvider.currentTextColor,
+                  ),
+                ),
               ),
               _isLoading
                   ? const Center(child: CircularProgressIndicator())

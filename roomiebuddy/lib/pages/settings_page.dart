@@ -63,7 +63,13 @@ class _SettingsPageState extends State<SettingsPage> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(
+          'Settings',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: themeProvider.currentTextColor,
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -71,11 +77,12 @@ class _SettingsPageState extends State<SettingsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Appearance Section
-            const Text(
+            Text(
               'Appearance',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: themeProvider.currentTextColor,
               ),
             ),
             const SizedBox(height: 12),
@@ -83,7 +90,10 @@ class _SettingsPageState extends State<SettingsPage> {
             // Dark Mode Toggle
             Card(
               child: ListTile(
-                title: const Text('Dark Mode'),
+                title: Text(
+                  'Dark Mode',
+                  style: TextStyle(color: themeProvider.currentTextColor),
+                ),
                 trailing: Container(
                   padding: const EdgeInsets.only(right: 0),
                   width: 50,
@@ -106,7 +116,10 @@ class _SettingsPageState extends State<SettingsPage> {
             // Theme Color
             Card(
               child: ListTile(
-                title: const Text('Theme Color'),
+                title: Text(
+                  'Theme Color',
+                  style: TextStyle(color: themeProvider.currentTextColor),
+                ),
                 trailing: Container(
                   width: 50,
                   height: 30,
@@ -124,11 +137,12 @@ class _SettingsPageState extends State<SettingsPage> {
             
             // Account Section
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Account',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: themeProvider.currentTextColor,
               ),
             ),
             const SizedBox(height: 12),

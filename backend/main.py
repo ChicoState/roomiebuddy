@@ -234,8 +234,24 @@ def handle_login() -> Response:
         make_new_log("login", e)
         return response_json
 
+    try:
+        data_con = connect("data/data.db")
+        data_cursor = data_con.cursor()
+        data_cursor.execute(
+            "SELECT username FROM user WHERE uuid = ?;",
+            (user_id,),
+        )
+        username = data_cursor.fetchone()[0]
+        data_con.close()
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("login", e)
+        return response_json
+
     response_json = jsonify(
-        [{"error_no": "0", "message": "success", "user_id": user_id}]
+        [{"error_no": "0", "message": "success", "user_id": user_id, "username": username}]
     )
     return response_json
 
@@ -1061,7 +1077,7 @@ def handle_invite_to_group() -> Response:
 
     try:
         # Verify password before inviting
-        if not check_password(connect("../data/data.db"), inviter_id, password):
+        if not check_password(connect("data/data.db"), inviter_id, password):
             response_json = jsonify(
                 [{"error_no": "4", "message": "Password is incorrect"}]
             )

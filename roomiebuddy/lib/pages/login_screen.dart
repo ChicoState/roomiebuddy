@@ -112,12 +112,14 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result['success']) {
         // Extract user ID from the response
         final String userId = result['data']['user_id'];
+        final String username = result['data']['username'];
         
         // Store credentials for future use
         await _authStorage.storeUserCredentials(
           userId,
           emailController.text.trim(),
           passwordController.text.trim(),
+          username,
         );
         
         // Navigate to main screen
@@ -159,7 +161,13 @@ class _LoginScreenState extends State<LoginScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Roomie Buddy'),
+        title: Text(
+          'Roomie Buddy',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: themeProvider.currentTextColor,
+          ),
+        ),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -5,6 +5,7 @@ class AuthStorage {
   static const String _userIdKey = 'user_id';
   static const String _emailKey = 'email';
   static const String _passwordKey = 'password';
+  static const String _usernameKey = 'username';
   
   // Singleton pattern implementation
   static final AuthStorage _instance = AuthStorage._internal();
@@ -16,12 +17,13 @@ class AuthStorage {
   AuthStorage._internal();
   
   // Store user credentials
-  Future<bool> storeUserCredentials(String userId, String email, String password) async {
+  Future<bool> storeUserCredentials(String userId, String email, String password, String username) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_userIdKey, userId);
       await prefs.setString(_emailKey, email);
       await prefs.setString(_passwordKey, password);
+      await prefs.setString(_usernameKey, username);
       return true;
     } catch (e) {
       print('Error storing user credentials: $e');
@@ -62,6 +64,17 @@ class AuthStorage {
     }
   }
   
+  // Get username
+  Future<String?> getUsername() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_usernameKey);
+    } catch (e) {
+      print('Error getting username: $e');
+      return null;
+    }
+  }
+  
   // Check if user is logged in
   Future<bool> isLoggedIn() async {
     try {
@@ -71,14 +84,16 @@ class AuthStorage {
       final userId = prefs.getString(_userIdKey);
       final email = prefs.getString(_emailKey);
       final password = prefs.getString(_passwordKey);
+      final username = prefs.getString(_usernameKey);
       
       // For development/debugging - remove or set to false in production
-      print("Auth check: UserId=$userId, Email=$email");
+      print("Auth check: UserId=$userId, Email=$email, Username=$username");
       
       // Ensure all values exist and aren't empty
       return userId != null && userId.isNotEmpty && 
              email != null && email.isNotEmpty && 
-             password != null && password.isNotEmpty;
+             password != null && password.isNotEmpty &&
+             username != null && username.isNotEmpty;
     } catch (e) {
       print('Error checking login status: $e');
       return false;
@@ -92,6 +107,7 @@ class AuthStorage {
       await prefs.remove(_userIdKey);
       await prefs.remove(_emailKey);
       await prefs.remove(_passwordKey);
+      await prefs.remove(_usernameKey);
       return true;
     } catch (e) {
       print('Error clearing user credentials: $e');
