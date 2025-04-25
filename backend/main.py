@@ -16,8 +16,18 @@ from task import (
     edit_task,
     delete_task,
     get_user_task,
-    get_group,
+    get_group
+    create_group,
+    leave_group,
+    delete_group,
+    invite_user_to_group,
+    get_pending_invites,
+    respond_to_invite,
+    check_password
 )  # edit_task, get_user_task, get_group_task,
+from werkzeug.utils import secure_filename
+from sqlite3 import connect
+
 from error import BackendError
 from log import make_new_log
 
@@ -887,6 +897,282 @@ def handle_get_group_list() -> Response:
     response_json = jsonify([{"error_no": "0", "message": groups}])
     return response_json
 
+
+@app.route("/create_group", methods=["POST"])
+def handle_create_group() -> Response:
+    """Create a new group."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    
+    try:
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        password: str = request_data.get("password", "")
+        group_name: str = request_data.get("group_name", "")
+        description: str = request_data.get("description", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("create_group", e)
+        return response_json
+
+    if user_id == "" or password == "" or group_name == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+
+    try:
+        group_id: str = create_group(
+            user_id=user_id,
+            group_name=group_name,
+            description=description,
+            password=password
+        )
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": str(e)}]
+        )
+        make_new_log("create_group", e)
+        return response_json
+    
+    response_json = jsonify([{"error_no": "0", "message": {"group_id": group_id}}])
+    return response_json
+
+
+@app.route("/leave_group", methods=["POST"])
+def handle_leave_group() -> Response:
+    """Leave a group."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    
+    try:
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        password: str = request_data.get("password", "")
+        group_id: str = request_data.get("group_id", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("leave_group", e)
+        return response_json
+
+    if user_id == "" or password == "" or group_id == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+
+    try:
+        leave_group(
+            user_id=user_id,
+            group_id=group_id,
+            password=password
+        )
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": str(e)}]
+        )
+        make_new_log("leave_group", e)
+        return response_json
+    
+    response_json = jsonify([{"error_no": "0", "message": "Successfully left group"}])
+    return response_json
+
+
+@app.route("/delete_group", methods=["POST"])
+def handle_delete_group() -> Response:
+    """Delete a group."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    
+    try:
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        password: str = request_data.get("password", "")
+        group_id: str = request_data.get("group_id", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("delete_group", e)
+        return response_json
+
+    if user_id == "" or password == "" or group_id == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+
+    try:
+        delete_group(
+            user_id=user_id,
+            group_id=group_id,
+            password=password
+        )
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": str(e)}]
+        )
+        make_new_log("delete_group", e)
+        return response_json
+    
+    response_json = jsonify([{"error_no": "0", "message": "Successfully deleted group"}])
+    return response_json
+
+
+ # ----- Invite Handlers ----
+  
+  
+@app.route("/invite_to_group", methods=["POST"])
+def handle_invite_to_group() -> Response:
+    """Invite a user to join a group."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    
+    try:
+        request_data: dict = request.get_json()
+        inviter_id: str = request_data.get("inviter_id", "")
+        invitee_id: str = request_data.get("invitee_id", "")
+        group_id: str = request_data.get("group_id", "")
+        password: str = request_data.get("password", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("invite_to_group", e)
+        return response_json
+
+    if inviter_id == "" or invitee_id == "" or group_id == "" or password == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+
+    try:
+        # Verify password before inviting
+        if not check_password(connect("../data/data.db"), inviter_id, password):
+            response_json = jsonify(
+                [{"error_no": "4", "message": "Password is incorrect"}]
+            )
+            return response_json
+            
+        invite_id: str = invite_user_to_group(
+            inviter_id=inviter_id,
+            invitee_id=invitee_id,
+            group_id=group_id
+        )
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": str(e)}]
+        )
+        make_new_log("invite_to_group", e)
+        return response_json
+    
+    response_json = jsonify([{"error_no": "0", "message": {"invite_id": invite_id}}])
+    return response_json
+
+
+@app.route("/get_pending_invites", methods=["POST"])
+def handle_get_pending_invites() -> Response:
+    """Get all pending group invites for a user."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    
+    try:
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        password: str = request_data.get("password", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("get_pending_invites", e)
+        return response_json
+
+    if user_id == "" or password == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+
+    try:
+        invites: dict[str, dict] = get_pending_invites(
+            user_id=user_id,
+            password=password
+        )
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": str(e)}]
+        )
+        make_new_log("get_pending_invites", e)
+        return response_json
+    
+    response_json = jsonify([{"error_no": "0", "message": invites}])
+    return response_json
+
+
+@app.route("/respond_to_invite", methods=["POST"])
+def handle_respond_to_invite() -> Response:
+    """Accept or reject a group invitation."""
+    response_json: Response
+    if request.method != "POST":
+        response_json = jsonify([{"error_no": "1", "message": "Wrong request type"}])
+        return response_json
+    
+    try:
+        request_data: dict = request.get_json()
+        user_id: str = request_data.get("user_id", "")
+        invite_id: str = request_data.get("invite_id", "")
+        status: str = request_data.get("status", "")
+        password: str = request_data.get("password", "")
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": "Trouble with backend! Sorry!"}]
+        )
+        make_new_log("respond_to_invite", e)
+        return response_json
+
+    if user_id == "" or invite_id == "" or status == "" or password == "":
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Given data is invalid!"}]
+        )
+        return response_json
+        
+    if status not in ["accepted", "rejected"]:
+        response_json = jsonify(
+            [{"error_no": "3", "message": "Status must be 'accepted' or 'rejected'"}]
+        )
+        return response_json
+
+    try:
+        respond_to_invite(
+            user_id=user_id,
+            invite_id=invite_id,
+            status=status,
+            password=password
+        )
+    except Exception as e:
+        response_json = jsonify(
+            [{"error_no": "2", "message": str(e)}]
+        )
+        make_new_log("respond_to_invite", e)
+        return response_json
+    
+    response_json = jsonify([{"error_no": "0", "message": f"Successfully {status} invitation"}])
+    return response_json
 
 if __name__ == "__main__":
     print("Running main.py")

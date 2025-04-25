@@ -114,6 +114,95 @@ class ApiService {
     });
   }
 
+  // GROUP METHODS
+
+  // Get all groups for a user
+  Future<Map<String, dynamic>> getGroupList(String userId, String password) async {
+    return await post('/get_group_list', {
+      'user_id': userId,
+      'password': password,
+    });
+  }
+
+  // Create a new group
+  Future<Map<String, dynamic>> createGroup(
+    String userId, 
+    String password, 
+    String groupName, 
+    String description
+  ) async {
+    return await post('/create_group', {
+      'user_id': userId,
+      'password': password,
+      'group_name': groupName,
+      'description': description,
+    });
+  }
+
+  // Leave a group
+  Future<Map<String, dynamic>> leaveGroup(
+    String userId, 
+    String password, 
+    String groupId
+  ) async {
+    return await post('/leave_group', {
+      'user_id': userId,
+      'password': password,
+      'group_id': groupId,
+    });
+  }
+
+  // Delete a group
+  Future<Map<String, dynamic>> deleteGroup(
+    String userId, 
+    String password, 
+    String groupId
+  ) async {
+    return await post('/delete_group', {
+      'user_id': userId,
+      'password': password,
+      'group_id': groupId,
+    });
+  }
+
+  // Invite a user to a group
+  Future<Map<String, dynamic>> inviteToGroup(
+    String inviterId, 
+    String inviteeId, 
+    String groupId, 
+    String password
+  ) async {
+    return await post('/invite_to_group', {
+      'inviter_id': inviterId,
+      'invitee_id': inviteeId,
+      'group_id': groupId,
+      'password': password,
+    });
+  }
+
+  // Get pending group invites for a user
+  Future<Map<String, dynamic>> getPendingInvites(String userId, String password) async {
+    return await post('/get_pending_invites', {
+      'user_id': userId,
+      'password': password,
+    });
+  }
+
+  // Respond to a group invitation
+  Future<Map<String, dynamic>> respondToInvite(
+    String userId, 
+    String inviteId, 
+    String status, 
+    String password
+  ) async {
+    return await post('/respond_to_invite', {
+      'user_id': userId,
+      'invite_id': inviteId,
+      'status': status, // 'accepted' or 'rejected'
+      'password': password,
+    });
+  }
+
   // Handle HTTP response
   Map<String, dynamic> _handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {

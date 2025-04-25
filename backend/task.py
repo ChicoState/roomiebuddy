@@ -4,6 +4,7 @@
 from datetime import datetime
 from sqlite3 import connect, Connection, Cursor, Error
 from uuid import uuid4
+from time import time
 
 from error import BackendError
 
@@ -38,9 +39,11 @@ CREATE_GROUP_USER_TABLE: str = (
 #     "role_name TEXT NOT NULL, role_description TEXT, "
 #     "role_permissions TEXT, admin INT NOT NULL);"
 # )
-CREATE_PENDING_INVITE_TABLE: str = (
-    "CREATE TABLE IF NOT EXISTS pending_invite "
-    "(group_id TEXT NOT NULL, user_id TEXT NOT NULL);"
+CREATE_GROUP_INVITES_TABLE: str = (
+    "CREATE TABLE IF NOT EXISTS group_invites"
+    "(invite_id TEXT PRIMARY KEY, group_id TEXT NOT NULL, "
+    "inviter_id TEXT NOT NULL, invitee_id TEXT NOT NULL, "
+    "status TEXT NOT NULL, created_at REAL NOT NULL);"
 )
 
 # ---- Check Functions ----------------
@@ -59,14 +62,14 @@ def check_table() -> Connection:
     data_cursor.execute(CREATE_USER_TABLE)
     data_cursor.execute(CREATE_GROUP_TABLE)
     data_cursor.execute(CREATE_GROUP_USER_TABLE)
-    data_cursor.execute(CREATE_PENDING_INVITE_TABLE)
+    data_cursor.execute(CREATE_GROUP_INVITES_TABLE)
 
     if (
         len(data_cursor.execute("SELECT * FROM task;").description) != 14
         or len(data_cursor.execute("SELECT * FROM user;").description) != 4
         or len(data_cursor.execute("SELECT * FROM task_group;").description) != 4
         or len(data_cursor.execute("SELECT * FROM group_user;").description) != 3
-        or len(data_cursor.execute("SELECT * FROM pending_invite;").description) != 2
+        or len(data_cursor.execute("SELECT * FROM group_invites;").description) != 6
     ):
         data_con.close()
         raise BackendError(
@@ -114,6 +117,30 @@ def check_user_in_group(data_con: Connection, user_id: str, group_id: str) -> bo
     if len(data_cursor.fetchall()) == 0:
         return False
     return True
+
+
+def check_invite_exists(data_con: Connection, invite_id: str = "", 
+                        invitee_id: str = "", group_id: str = "") -> tuple[bool, str]:
+    """Check if an invite exists"""
+    data_cursor: Cursor = data_con.cursor()
+    
+    if invite_id:
+        data_cursor.execute(
+            "SELECT status FROM group_invites WHERE invite_id = ?;",
+            (invite_id,),
+        )
+    elif invitee_id and group_id:
+        data_cursor.execute(
+            "SELECT status FROM group_invites WHERE invitee_id = ? AND group_id = ?;",
+            (invitee_id, group_id),
+        )
+    else:
+        return False, ""
+        
+    result = data_cursor.fetchall()
+    if len(result) == 0:
+        return False, ""
+    return True, result[0][0]
 
 
 def check_id_exists(data_con: Connection, data_table: str, given_id: str) -> bool:
@@ -321,13 +348,22 @@ def create_group(
     description: str,
     group_name: str,
     password: str,
-) -> None:
+) -> str:
     """This will create a group."""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
-        raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
+      raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
+    
+    # Verify user exists and password is correct
+    if not check_user_exists(data_con, user_id):
+        data_con.close()
+        raise Exception("User does not exist.")
+        
+    if not check_password(data_con, user_id, password):
+        data_con.close()
+        raise Exception("Password is incorrect.")
 
     group_id: str = str(uuid4())
     while check_id_exists(data_con, "group", group_id):
@@ -342,18 +378,18 @@ def create_group(
         raise BackendError("Backend Error: Password is incorrect", 305)
 
     data_cursor.execute(
-        "INSERT INTO group VALUES (?, ?, ?, ?);",
+        "INSERT INTO task_group VALUES (?, ?, ?, ?);",
         (group_id, group_name, description, user_id),
     )
 
     data_cursor.execute(
-        "INSERT INTO group_user VALUES (?, ?);",
-        (group_id, user_id),
+        "INSERT INTO group_user VALUES (?, ?, ?);",
+        (group_id, user_id, None),
     )
 
     data_con.commit()
     data_con.close()
-    return
+    return group_id
 
 
 def add_user_to_group(
@@ -392,19 +428,75 @@ def add_user_to_group(
     return
 
 
-def remove_user_from_group(
+def invite_user_to_group(
+    inviter_id: str,
+    invitee_id: str,
+    group_id: str,
+) -> str:
+    """This will invite a user to a group"""
+    try:
+        data_con: Connection = check_table()
+        data_cursor: Cursor = data_con.cursor()
+    except Error as e_msg:
+        raise e_msg
+
+    # Check if inviter, invitee, and group exist
+    if not check_user_exists(data_con, inviter_id):
+        data_con.close()
+        raise Exception("Inviter does not exist.")
+    
+    if not check_user_exists(data_con, invitee_id):
+        data_con.close()
+        raise Exception("Invitee does not exist.")
+    
+    if not check_group_exists(data_con, group_id):
+        data_con.close()
+        raise Exception("Group does not exist.")
+    
+    # Check if inviter is in the group
+    if not check_user_in_group(data_con, inviter_id, group_id):
+        data_con.close()
+        raise Exception("Inviter is not a member of the group.")
+    
+    # Check if invitee is already in the group
+    if check_user_in_group(data_con, invitee_id, group_id):
+        data_con.close()
+        raise Exception("User is already in the group.")
+    
+    # Check if invitee has a pending invitation
+    invite_exists, status = check_invite_exists(data_con, invitee_id=invitee_id, group_id=group_id)
+    if invite_exists and status == "pending":
+        data_con.close()
+        raise Exception("User already has a pending invitation to this group.")
+    
+    # Create invitation
+    invite_id: str = str(uuid4())
+    created_at: float = time()
+    
+    data_cursor.execute(
+        "INSERT INTO group_invites VALUES (?, ?, ?, ?, ?, ?);",
+        (invite_id, group_id, inviter_id, invitee_id, "pending", created_at),
+    )
+    
+    data_con.commit()
+    data_con.close()
+    return invite_id
+
+
+def leave_group(
     user_id: str,
     group_id: str,
     password: str,
 ) -> None:
-    """Removes a user from a group."""
+    """Removes a user from a group"""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
         raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
-    if check_user_exists(data_con, user_id) is False:
+    # Verify user exists and password is correct
+    if not check_user_exists(data_con, user_id):
         data_con.close()
         raise BackendError("Backend Error: User does not exist", 304)
 
@@ -412,15 +504,45 @@ def remove_user_from_group(
         data_con.close()
         raise BackendError("Backend Error: Password is incorrect", 305)
 
-    if check_group_exists(data_con, group_id) is False:
+    # Verify group exists
+    if not check_group_exists(data_con, group_id):
         data_con.close()
         raise BackendError("Backend Error: Group does not exist", 306)
+        
+    # Verify user is in the group
+    if not check_user_in_group(data_con, user_id, group_id):
+        data_con.close()
+        raise Exception("User is not in the group.")
 
+    # Remove user from group
     data_cursor.execute(
         "DELETE FROM group_user WHERE group_id = ? AND user_id = ?;",
         (group_id, user_id),
     )
+    
+    # Check if group is now empty
+    data_cursor.execute(
+        "SELECT COUNT(*) FROM group_user WHERE group_id = ?;",
+        (group_id,),
+    )
+    
+    count = data_cursor.fetchone()[0]
+    
+    # If group is empty, delete it
+    if count == 0:
+        data_cursor.execute(
+            "DELETE FROM task_group WHERE uuid = ?;",
+            (group_id,),
+        )
+        
+        # Also delete any pending invites for this group
+        data_cursor.execute(
+            "DELETE FROM group_invites WHERE group_id = ?;",
+            (group_id,),
+        )
 
+    data_con.commit()
+    data_con.close()
     return
 
 
@@ -429,24 +551,31 @@ def delete_group(
     group_id: str,
     password: str,
 ) -> None:
-    """Deletes a group."""
+    """Deletes a group"""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
         raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
-    if check_group_exists(data_con, group_id) is False:
+    # Verify group exists
+    if not check_group_exists(data_con, group_id):
         data_con.close()
         raise BackendError("Backend Error: Group does not exist", 306)
 
-    if check_user_exists(data_con, user_id) is False:
+    # Verify user exists and password is correct
+    if not check_user_exists(data_con, user_id):
         data_con.close()
         raise BackendError("Backend Error: User does not exist in group", 304)
-
-    if check_password(data_con, user_id, password) is False:
+        
+    if not check_password(data_con, user_id, password):
         data_con.close()
         raise BackendError("Backend Error: Password is incorrect", 305)
+    
+    # Verify user is in the group
+    if not check_user_in_group(data_con, user_id, group_id):
+        data_con.close()
+        raise Exception("User is not a member of the group.")
 
     data_cursor.execute(
         "SELECT * FROM task_group WHERE uuid = ? AND owner_id = ?;",
@@ -457,16 +586,26 @@ def delete_group(
         data_con.close()
         raise BackendError("Backend Error: User is not the owner of the group", 308)
 
+    # Delete the group
     data_cursor.execute(
         "DELETE FROM task_group WHERE uuid = ?;",
         (group_id,),
     )
 
+    # Delete all users from the group
     data_cursor.execute(
         "DELETE FROM group_user WHERE group_id = ?;",
         (group_id,),
     )
-
+    
+    # Delete all invites for the group
+    data_cursor.execute(
+        "DELETE FROM group_invites WHERE group_id = ?;",
+        (group_id,),
+    )
+    
+    data_con.commit()
+    data_con.close()
     return
 
 
@@ -474,37 +613,186 @@ def get_group(
     user_id: str,
     password: str,
 ) -> dict[str, dict]:
-    """This will get the group from the user."""
+    """Gets all groups a user is a member of"""
     try:
         data_con: Connection = check_table()
         data_cursor: Cursor = data_con.cursor()
     except Error as e_msg:
         raise BackendError("Backend Error: Cannot Connect to Database", 200) from e_msg
 
-    if check_user_exists(data_con, user_id) is False:
+    if not check_user_exists(data_con, user_id):
         data_con.close()
         raise BackendError("Backend Error: User does not exist", 304)
 
-    if check_password(data_con, user_id, password) is False:
+    if not check_password(data_con, user_id, password):
         data_con.close()
         raise BackendError("Backend Error: Password is incorrect", 305)
 
+    # Get all groups the user is a member of
     data_cursor.execute(
-        "SELECT * FROM group_user WHERE user_id = ?;",
+        """
+        SELECT g.uuid, g.name, g.description, g.owner_id 
+        FROM task_group g
+        JOIN group_user gu ON g.uuid = gu.group_id
+        WHERE gu.user_id = ?
+        """,
         (user_id,),
     )
-
-    group_list: list[tuple] = data_cursor.fetchall()
-    new_group_list: dict[str, dict] = {}
-    for group in group_list:
-        new_group_list[group[0]] = {
-            "group_id": group[0],
-            "user_id": group[1],
-            "role_id": group[2],
+    
+    groups_data = data_cursor.fetchall()
+    groups: dict[str, dict] = {}
+    
+    for group in groups_data:
+        group_id, name, description, owner_id = group
+        
+        # Get all members of this group
+        data_cursor.execute(
+            """
+            SELECT u.uuid, u.username
+            FROM user u
+            JOIN group_user gu ON u.uuid = gu.user_id
+            WHERE gu.group_id = ?
+            """,
+            (group_id,),
+        )
+        
+        members_data = data_cursor.fetchall()
+        members = []
+        
+        for member in members_data:
+            member_id, member_name = member
+            members.append({
+                "user_id": member_id,
+                "username": member_name
+            })
+        
+        groups[group_id] = {
+            "group_id": group_id,
+            "name": name,
+            "description": description,
+            "owner_id": owner_id,  # Keeping for compatibility
+            "members": members
         }
+    
     data_con.close()
+    return groups
 
-    return new_group_list
+
+def get_pending_invites(
+    user_id: str,
+    password: str,
+) -> dict[str, dict]:
+    """Gets all pending invites for a user"""
+    try:
+        data_con: Connection = check_table()
+        data_cursor: Cursor = data_con.cursor()
+    except Error as e_msg:
+        raise e_msg
+    
+    # Check if user exists and password is correct
+    if not check_user_exists(data_con, user_id):
+        data_con.close()
+        raise Exception("User does not exist.")
+    
+    if not check_password(data_con, user_id, password):
+        data_con.close()
+        raise Exception("Password is incorrect.")
+    
+    # Get all pending invites for the user
+    data_cursor.execute(
+        """
+        SELECT i.invite_id, i.group_id, i.inviter_id, i.created_at, g.name, u.username
+        FROM group_invites i
+        JOIN task_group g ON i.group_id = g.uuid
+        JOIN user u ON i.inviter_id = u.uuid
+        WHERE i.invitee_id = ? AND i.status = 'pending'
+        """,
+        (user_id,),
+    )
+    
+    invites_data = data_cursor.fetchall()
+    invites: dict[str, dict] = {}
+    
+    for invite in invites_data:
+        invite_id, group_id, inviter_id, created_at, group_name, inviter_name = invite
+        invites[invite_id] = {
+            "invite_id": invite_id,
+            "group_id": group_id,
+            "group_name": group_name,
+            "inviter_id": inviter_id,
+            "inviter_name": inviter_name,
+            "created_at": created_at,
+        }
+    
+    data_con.close()
+    return invites
+
+
+def respond_to_invite(
+    user_id: str,
+    invite_id: str,
+    status: str,
+    password: str,
+) -> None:
+    """Responds to a group invitation (accept or reject)"""
+    if status not in ["accepted", "rejected"]:
+        raise Exception("Invalid status. Must be 'accepted' or 'rejected'.")
+    
+    try:
+        data_con: Connection = check_table()
+        data_cursor: Cursor = data_con.cursor()
+    except Error as e_msg:
+        raise e_msg
+    
+    # Check if user exists and password is correct
+    if not check_user_exists(data_con, user_id):
+        data_con.close()
+        raise Exception("User does not exist.")
+    
+    if not check_password(data_con, user_id, password):
+        data_con.close()
+        raise Exception("Password is incorrect.")
+    
+    # Check if invite exists
+    invite_exists, invite_status = check_invite_exists(data_con, invite_id=invite_id)
+    if not invite_exists:
+        data_con.close()
+        raise Exception("Invitation does not exist.")
+    
+    if invite_status != "pending":
+        data_con.close()
+        raise Exception(f"Invitation has already been {invite_status}.")
+    
+    # Check if the invite is for this user
+    data_cursor.execute(
+        "SELECT group_id, invitee_id FROM group_invites WHERE invite_id = ?;",
+        (invite_id,),
+    )
+    
+    result = data_cursor.fetchone()
+    if not result or result[1] != user_id:
+        data_con.close()
+        raise Exception("This invitation is not for you.")
+    
+    group_id = result[0]
+    
+    # Update the invitation status
+    data_cursor.execute(
+        "UPDATE group_invites SET status = ? WHERE invite_id = ?;",
+        (status, invite_id),
+    )
+    
+    # If accepted, add the user to the group
+    if status == "accepted":
+        if not check_user_in_group(data_con, user_id, group_id):
+            data_cursor.execute(
+                "INSERT INTO group_user VALUES (?, ?, ?);",
+                (group_id, user_id, None),
+            )
+    
+    data_con.commit()
+    data_con.close()
+    return
 
 
 # ---- Task Functions ----------------
