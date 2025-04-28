@@ -25,7 +25,13 @@ class _AddTaskpageState extends State<AddTaskpage> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Task', style: TextStyle(color: themeProvider.lightTextColor)),
+        title: Text(
+          'Add Task',
+          style: TextStyle(
+            color: themeProvider.currentTextColor,
+            fontWeight: FontWeight.bold
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

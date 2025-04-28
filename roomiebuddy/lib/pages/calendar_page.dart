@@ -31,7 +31,13 @@ class _CalendarPageState extends State<CalendarPage> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Task Calendar'),
+        title: Text(
+          'Task Calendar',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: themeProvider.currentTextColor,
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
