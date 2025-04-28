@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  bool _isDarkMode = false; // GLOBAL DARK MODE FLAG
-  Color _themeColor = Colors.greenAccent; // GLOBAL THEME COLOR
+  bool _isDarkMode = true; // GLOBAL DARK MODE FLAG
+  Color _themeColor = Colors.blueGrey; // GLOBAL THEME COLOR
 
   // Utility colors (Theme independent)
   Color get errorColor => Colors.red;
@@ -10,12 +10,12 @@ class ThemeProvider extends ChangeNotifier {
   Color get successColor => Colors.green;
   
   // Global colors (Light Mode)
-  Color get lightBackground => Colors.white;
-  Color get lightCardBackground => Colors.white;
+  Color get lightBackground => Colors.grey[300]!;
+  Color get lightCardBackground => Colors.grey[50]!;
   Color get lightTextColor => Colors.black;
   Color get lightTextSecondary => Colors.grey[700]!;
   Color get lightBorder => Colors.grey[300]!;
-  Color get lightInputFill => Colors.white;
+  Color get lightInputFill => Colors.grey[100]!;
   
   // Global colors (Dark Mode)
   Color get darkBackground => Colors.grey[850]!;
@@ -46,7 +46,7 @@ class ThemeProvider extends ChangeNotifier {
   bool get isDarkMode => _isDarkMode;
   Color get themeColor => _themeColor;
   Color get currentBackground => _isDarkMode ? darkBackground : lightBackground;
-  Color get currentCardBackground => _isDarkMode ? darkCardBackground : lightCardBackground;
+  Color get currentCardBackground => _isDarkMode ? darkCardBackground : lightBackground;
   Color get currentTextColor => _isDarkMode ? darkTextColor : lightTextColor;
   Color get currentSecondaryTextColor => _isDarkMode ? darkTextSecondary : lightTextSecondary;
   Color get currentBorderColor => _isDarkMode ? darkBorder : lightBorder;
@@ -73,19 +73,19 @@ class ThemeProvider extends ChangeNotifier {
       canvasColor: backgroundColor,
       appBarTheme: AppBarTheme(
         backgroundColor: appBarBgColor,
-        titleTextStyle: TextStyle(color: lightTextColor, fontSize: 20),
-        iconTheme: IconThemeData(color: lightTextColor),
+        titleTextStyle: TextStyle(color: textColor, fontSize: 20),
+        iconTheme: IconThemeData(color: textColor),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         selectedItemColor: _themeColor,
-        unselectedItemColor: lightTextColor,
-        selectedLabelStyle: TextStyle(color: lightTextColor),
-        unselectedLabelStyle: TextStyle(color: lightTextColor),
+        unselectedItemColor: textColor,
+        selectedLabelStyle: TextStyle(color: textColor),
+        unselectedLabelStyle: TextStyle(color: textColor),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: _themeColor,
-          foregroundColor: lightTextColor,
+          foregroundColor: textColor,
         ),
       ),
       cardTheme: CardTheme(

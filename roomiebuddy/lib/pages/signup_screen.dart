@@ -31,7 +31,13 @@ class _SignupScreenState extends State<SignupScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Roomie Buddy'),
+        title: Text(
+          'Roomie Buddy',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: themeProvider.currentTextColor,
+          ),
+        ),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
