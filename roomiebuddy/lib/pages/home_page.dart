@@ -5,6 +5,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:provider/provider.dart';
 import '../common/widget/appbar/appbar.dart';
 import '../providers/theme_provider.dart';
+import 'package:roomiebuddy/services/auth_storage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,10 +26,36 @@ class HomePageState extends State<HomePage> {
     {"groupName": "Laundry Legends", "members": ["Fred", "Gina", "Harry"]},
   ];
 
+  final AuthStorage _authStorage = AuthStorage();
+  String? _userId;
+  String? _password;
+  String _userName = "User";
+
   @override
   void initState() {
     super.initState();
-    fetchTasks();
+    _loadUserDataAndTasks();
+  }
+
+  Future<void> _loadUserDataAndTasks() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    _userId = await _authStorage.getUserId();
+    _password = await _authStorage.getPassword();
+    _userName = await _authStorage.getUsername() ?? "User";
+
+    if (_userId != null && _password != null) {
+      await fetchTasks(_userId!, _password!);
+    } else {
+      print("User not logged in.");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in to view tasks.')),
+        );
+      }
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   String _getGreeting() {
@@ -38,7 +65,7 @@ class HomePageState extends State<HomePage> {
     return "Good Evening";
   }
 
-  Future<void> fetchTasks() async {
+  Future<void> fetchTasks(String userId, String password) async {
     if (!mounted) return;
     setState(() {
       _isLoading = true;
@@ -49,9 +76,8 @@ class HomePageState extends State<HomePage> {
         Uri.parse('http://10.0.2.2:5000/get_user_task'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'category': _selectedCategory,
-          'user_id': "dummy_id",
-          "password": "dummy_password"
+          'user_id': userId,
+          'password': password
         }),
       );
 
@@ -59,28 +85,73 @@ class HomePageState extends State<HomePage> {
         final decoded = jsonDecode(response.body);
         if (decoded is List && decoded.isNotEmpty) {
           final firstItem = decoded[0];
-          final message = firstItem["message"];
-          if (message is Map<String, dynamic>) {
-            setState(() {
-              _tasks = message.entries.map((e) {
-                final task = e.value;
-                return {
-                  "id": e.key,
-                  "taskName": task["name"] ?? "No Task Name",
-                  "assignedBy": task["assigner_id"] ?? "Unknown",
-                  "priority": task["priority"] ?? "Low",
-                  "description": task["description"] ?? "",
-                  "dueDate": task["due_date"],
-                  "dueTime": task["due_time"],
-                  "photo": task["photo_url"],
-                };
-              }).toList();
-            });
+          if (firstItem['error_no'] == '0' && firstItem['message'] is Map<String, dynamic>) {
+            final tasksMap = firstItem['message'] as Map<String, dynamic>;
+            if (mounted) {
+              setState(() {
+                _tasks = tasksMap.entries.map((entry) {
+                  final taskId = entry.key;
+                  final taskData = entry.value as Map<String, dynamic>;
+
+                  final double? dueTimestamp = taskData['due_timestamp'] as double?;
+                  String? dueDateStr;
+                  String? dueTimeStr;
+                  if (dueTimestamp != null) {
+                    final dateTime = DateTime.fromMillisecondsSinceEpoch((dueTimestamp * 1000).toInt());
+                    dueDateStr = "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}";
+                    dueTimeStr = "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
+                  }
+
+                  final int priorityInt = taskData['priority'] as int? ?? 0;
+                  final String priorityStr = priorityToString(priorityInt);
+
+                  return {
+                    "id": taskId,
+                    "taskName": taskData["name"] ?? "No Task Name",
+                    "assignedBy": taskData["assigner_id"] ?? "Unknown",
+                    "priority": priorityStr,
+                    "description": taskData["description"] ?? "",
+                    "dueDate": dueDateStr,
+                    "dueTime": dueTimeStr,
+                    "photo": taskData["image_path"],
+                    "assignee_id": taskData["assign_id"],
+                    "group_id": taskData["group_id"],
+                    "completed": taskData["completed"] as bool? ?? false,
+                  };
+                }).toList();
+              });
+            }
+          } else {
+            print('Backend error: ${firstItem['message']}');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to load tasks: ${firstItem['message']}')),
+              );
+            }
           }
+        } else {
+          print('Unexpected response format from /get_user_task');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to load tasks: Invalid server response.')),
+            );
+          }
+        }
+      } else {
+        print('HTTP error ${response.statusCode}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to load tasks: Server error ${response.statusCode}')),
+          );
         }
       }
     } catch (e) {
       print('Error fetching tasks: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error fetching tasks: $e')),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -90,9 +161,18 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  String priorityToString(int priority) {
+    switch (priority) {
+      case 0: return 'Low';
+      case 1: return 'Medium';
+      case 2: return 'High';
+      default: return 'Unknown';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    String userName = "Naruto";
+    String userName = _userName;
     String? profileImagePath;
     final themeProvider = Provider.of<ThemeProvider>(context);
 
@@ -200,19 +280,41 @@ class HomePageState extends State<HomePage> {
 
   Widget displayTasks() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+
+    if (_tasks.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Text(
+            'No tasks assigned to you yet!',
+            style: TextStyle(color: themeProvider.currentSecondaryTextColor, fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _tasks.length,
       itemBuilder: (context, index) {
         final task = _tasks[index];
+        Color priorityColor = themeProvider.currentSecondaryTextColor;
+        if (task['priority'] == 'Medium') {
+          priorityColor = themeProvider.warningColor;
+        } else if (task['priority'] == 'High') {
+          priorityColor = themeProvider.errorColor;
+        }
+
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          color: themeProvider.currentCardBackground,
           child: ListTile(
-            title: Text(task['taskName']),
-            subtitle: Text('Assigned by: ${task['assignedBy']}'),
+            title: Text(task['taskName'], style: TextStyle(color: themeProvider.currentTextColor)),
+            subtitle: Text('Assigned by: ${task['assignedBy']}', style: TextStyle(color: themeProvider.currentSecondaryTextColor)),
             trailing: Text(task['priority'],
-                style: TextStyle(color: themeProvider.errorColor)),
+                style: TextStyle(color: priorityColor, fontWeight: FontWeight.bold)),
             onTap: () {
               Navigator.push(
                 context,
