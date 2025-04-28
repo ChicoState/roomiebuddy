@@ -124,6 +124,59 @@ class ApiService {
     });
   }
 
+  // **** NEW METHOD: Get members of a specific group ****
+  Future<Map<String, dynamic>> getGroupMembers(String userId, String groupId, String password) async {
+    // Note: The backend returns { error_no: 0, message: success, members: [...] }
+    // The _handleResponse expects a list as the top-level JSON object.
+    // We need to adjust how we handle this specific response or generalize _handleResponse.
+    // For now, we'll make a direct call and parse differently.
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/get_group_members'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': userId,
+          'group_id': groupId,
+          'password': password,
+        }),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+          Map<String, dynamic> responseData = jsonDecode(response.body);
+          if (responseData['error_no'] == '0') {
+            return {
+              'success': true,
+              'members': responseData['members'] ?? [], // Return members list
+              'message': responseData['message'],
+            };
+          } else {
+            return {
+              'success': false,
+              'message': responseData['message'] ?? 'Unknown backend error',
+            };
+          }
+        } else {
+          return {
+            'success': false,
+            'message': 'Server returned status code ${response.statusCode}',
+          };
+        }
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+  // **** END NEW METHOD ****
+
+  // Helper to convert priority int to string
+  String priorityToString(int priority) {
+    switch (priority) {
+      case 0: return 'Low';
+      case 1: return 'Medium';
+      case 2: return 'High';
+      default: return 'Unknown';
+    }
+  }
+
   // Create a new group
   Future<Map<String, dynamic>> createGroup(
     String userId, 
