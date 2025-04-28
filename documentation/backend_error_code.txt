@@ -27,10 +27,10 @@ Backend error codes
 
 200: "Generic Backend Error"
     Somethign went wrong in the backend, but we don't know what.
-
 201: "Backend Not Been configured correctly"
     The backend has not been configured correctly. Please check the backend configuration.
-
+202: "Database connection is not established"
+    This happens because the function failed to conenct with the database.
 
 ----------------
 sqlite3 error codes
@@ -58,3 +58,5 @@ sqlite3 error codes
     The task does not exist. Please check the task id and try again.
 310: "User is not in the group"
     The user is not in the group. Please check the group id and try again.
+311: "Invitee already has an invite"
+    The invitee already has an invite. Please check the group id and try again.

@@ -15,7 +15,6 @@ def make_new_log(log_title: str, log_data: Exception) -> None:
         log_file.write(f"{log_data}\n")
         log_file.write(format_exc())
         log_file.write("\n" + "\n")
-    return
 
 
 if __name__ == "__main__":

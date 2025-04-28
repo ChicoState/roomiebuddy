@@ -3,41 +3,12 @@
 
 from sqlite3 import connect, Connection, Cursor, Error
 
-
-CREATE_TASK_TABLE: str = (
-    "CREATE TABLE IF NOT EXISTS task"
-    "(uuid TEXT PRIMARY KEY, name TEXT NOT NULL, "
-    "description TEXT, due REAL, "
-    "est_day INT, est_hour INT, "
-    "est_min INT, assigner_uuid TEXT NOT NULL, "
-    "assign_uuid TEXT NOT NULL, group_uuid TEXT NOT NULL, "
-    "completed INT NOT NULL, priority INT, "
-    "recursive INT, image_path TEXT);"
-)
-CREATE_USER_TABLE: str = (
-    "CREATE TABLE IF NOT EXISTS user"
-    "(uuid TEXT PRIMARY KEY, username TEXT NOT NULL, "
-    "email TEXT NOT NULL, password TEXT NOT NULL);"
-)
-CREATE_GROUP_TABLE: str = (
-    "CREATE TABLE IF NOT EXISTS task_group"
-    "(uuid TEXT PRIMARY KEY, name TEXT NOT NULL, "
-    "description TEXT, owner_id INT NOT NULL);"
-)
-CREATE_GROUP_USER_TABLE: str = (
-    "CREATE TABLE IF NOT EXISTS group_user"
-    "(group_id TEXT NOT NULL, user_id TEXT NOT NULL, "
-    "role_id TEXT);"
-)
-# CREATE_GROUP_ROLES_TABLE: str = (
-#     "CREATE TABLE IF NOT EXISTS group_roles"
-#     "(group_id TEXT NOT NULL, uuid TEXT NOT NULL, "
-#     "role_name TEXT NOT NULL, role_description TEXT, "
-#     "role_permissions TEXT, admin INT NOT NULL);"
-# )
-CREATE_PENDING_INVITE_TABLE: str = (
-    "CREATE TABLE IF NOT EXISTS pending_invite "
-    "(group_id TEXT NOT NULL, user_id TEXT NOT NULL);"
+from validator import (
+    CREATE_GROUP_USER_TABLE,
+    CREATE_GROUP_TABLE,
+    CREATE_TASK_TABLE,
+    CREATE_USER_TABLE,
+    Validator
 )
 
 
@@ -133,7 +104,6 @@ def delete_tasks() -> None:
     data_cursor.execute("DELETE FROM task;")
     data_con.commit()
     data_con.close()
-    return
 
 
 def delete_everything() -> None:
@@ -151,7 +121,6 @@ def delete_everything() -> None:
     data_cursor.execute("DELETE FROM group_user;")
     data_con.commit()
     data_con.close()
-    return
 
 
 def check_table() -> Connection:
@@ -189,7 +158,7 @@ def check_table() -> Connection:
 
 if __name__ == "__main__":
     # prompt the user for action
-    check_table()
+    Validator().initializer()
     action = input(
         "Do you want to create or delete a dummy user? Or do you want to delete the tasks? "
         "([c]reate/[d]elete/[t]asks): "
