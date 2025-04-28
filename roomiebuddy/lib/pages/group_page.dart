@@ -457,7 +457,7 @@ class _GroupPageState extends State<GroupPage> {
               const SizedBox(height: 4),
 
               Container(
-                height: 425,
+                height: 420,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: themeProvider.currentInputFill,
