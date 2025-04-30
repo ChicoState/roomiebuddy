@@ -1,7 +1,6 @@
 # coding: utf-8
 """This will hold the information with task handle."""
 
-from datetime import datetime
 from typing import Any
 
 from flask import Request
@@ -36,34 +35,13 @@ class TaskHandle:
                 "password",
             ],
         )
-        task_due: float = datetime(
-            int(request_data.get("task_due_year", "2000")),
-            int(request_data.get("task_due_month", "1")),
-            int(request_data.get("task_due_date", "1")),
-            int(request_data.get("task_due_hour", "0")),
-            int(request_data.get("task_due_min", "0")),
-            0,
-        ).timestamp()
         return TaskController().add_task_control(
-            task_name=request_data["task_name"],
-            task_description=request_data.get("task_description", ""),
-            task_due=task_due,
-            task_est_day=int(request_data.get("task_est_day", "1")),
-            task_est_hour=int(request_data.get("task_est_hour", "0")),
-            task_est_min=int(request_data.get("task_est_min", "0")),
-            assigner_id=request_data["assigner_id"],
-            assign_id=request_data["assign_id"],
-            group_id=request_data["group_id"],
-            recursive=int(request_data.get("recursive", "0")),
-            priority=int(request_data.get("priority", "0")),
-            image_path="TODO CHANGE HERE",
-            password=request_data["password"],
+            request_data=request_data,
         )
 
     @handle_backend_exceptions
     def edit_task_request(self) -> None:
         """Edits a task."""
-
         request_data: dict[str, Any] = extract_request_data(
             request=self.user_request,
             required_fields=[
@@ -75,30 +53,8 @@ class TaskHandle:
                 "password",
             ],
         )
-        task_due: float = datetime(
-            int(request_data.get("task_due_year", "2000")),
-            int(request_data.get("task_due_month", "1")),
-            int(request_data.get("task_due_date", "1")),
-            int(request_data.get("task_due_hour", "0")),
-            int(request_data.get("task_due_min", "0")),
-            0,
-        ).timestamp()
         TaskController().edit_task_control(
-            task_id=request_data["task_id"],
-            task_name=request_data["task_name"],
-            task_description=request_data.get("task_description", ""),
-            task_due=task_due,
-            task_est_day=int(request_data.get("task_est_day", "0")),
-            task_est_hour=int(request_data.get("task_est_hour", "0")),
-            task_est_min=int(request_data.get("task_est_min", "0")),
-            assigner_id=request_data["assigner_id"],
-            assign_id=request_data["assign_id"],
-            group_id=request_data["group_id"],
-            recursive=int(request_data.get("recursive", "0")),
-            priority=int(request_data.get("priority", "0")),
-            completed=int(request_data.get("completed", "0")),
-            image_path="TODO CHANGE HERE",
-            password=request_data["password"],
+            request_data=request_data,
         )
 
     @handle_backend_exceptions
