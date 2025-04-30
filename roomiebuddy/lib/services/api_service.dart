@@ -126,10 +126,6 @@ class ApiService {
 
   // **** NEW METHOD: Get members of a specific group ****
   Future<Map<String, dynamic>> getGroupMembers(String userId, String groupId, String password) async {
-    // Note: The backend returns { error_no: 0, message: success, members: [...] }
-    // The _handleResponse expects a list as the top-level JSON object.
-    // We need to adjust how we handle this specific response or generalize _handleResponse.
-    // For now, we'll make a direct call and parse differently.
     try {
       final response = await _client.post(
         Uri.parse('$baseUrl/get_group_members'),
@@ -142,17 +138,26 @@ class ApiService {
       ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-          Map<String, dynamic> responseData = jsonDecode(response.body);
-          if (responseData['error_no'] == '0') {
-            return {
-              'success': true,
-              'members': responseData['members'] ?? [], // Return members list
-              'message': responseData['message'],
-            };
+          // The response is a JSON array with a single object
+          List<dynamic> responseList = jsonDecode(response.body);
+          if (responseList.isNotEmpty) {
+            Map<String, dynamic> firstItem = responseList[0];
+            if (firstItem['error_no'] == '0') {
+              return {
+                'success': true,
+                'members': firstItem['members'] ?? [], // Return members list
+                'message': firstItem['message'],
+              };
+            } else {
+              return {
+                'success': false,
+                'message': firstItem['message'] ?? 'Unknown backend error',
+              };
+            }
           } else {
             return {
               'success': false,
-              'message': responseData['message'] ?? 'Unknown backend error',
+              'message': 'Empty response from server',
             };
           }
         } else {
@@ -225,7 +230,7 @@ class ApiService {
     String groupId, 
     String password
   ) async {
-    return await post('/invite_to_group', {
+    return await post('/create_invite', {
       'inviter_id': inviterId,
       'invitee_id': inviteeId,
       'group_id': groupId,
@@ -235,7 +240,7 @@ class ApiService {
 
   // Get pending group invites for a user
   Future<Map<String, dynamic>> getPendingInvites(String userId, String password) async {
-    return await post('/get_pending_invites', {
+    return await post('/get_pending', {
       'user_id': userId,
       'password': password,
     });
@@ -248,7 +253,7 @@ class ApiService {
     String status, 
     String password
   ) async {
-    return await post('/respond_to_invite', {
+    return await post('/respond_invite', {
       'user_id': userId,
       'invite_id': inviteId,
       'status': status, // 'accepted' or 'rejected'

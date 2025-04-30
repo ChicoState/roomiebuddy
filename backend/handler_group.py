@@ -76,6 +76,20 @@ class GroupHandle:
             user_id=user_id, group_id=group_id, password=password
         )
 
+    @handle_backend_exceptions
+    def get_group_members_request(self) -> list[dict]:
+        """Get all members of a specific group."""
+        request_data = extract_request_data(
+            request=self.user_request,
+            required_fields=["user_id", "group_id", "password"],
+        )
+        user_id = request_data["user_id"]
+        group_id = request_data["group_id"]
+        password = request_data["password"]
+        return GroupController().get_group_members_control(
+            user_id=user_id, group_id=group_id, password=password
+        )
+
 
 if __name__ == "__main__":
     print("This is a module and should not be run directly.")

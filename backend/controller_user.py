@@ -36,17 +36,20 @@ class UserController:
         self,
         email: str,
         password: str,
-    ) -> str:
+    ) -> dict[str, str]:
         """This will login a user."""
-        if Validator().check_login(email=email, password=password):
+        if not Validator().check_login(email=email, password=password):
             raise BackendError("Backend Error: Email or Password is incorrect", "303")
         with db_operation() as data_cursor:
             data_cursor.execute(
-                "SELECT uuid FROM user WHERE email = ?;",
+                "SELECT uuid, username FROM user WHERE email = ?;",
                 (email,),
             )
-            user_id = data_cursor.fetchone()[0]
-        return user_id
+            user_data = data_cursor.fetchone()
+        if user_data:
+            return {"user_id": user_data[0], "username": user_data[1]}
+        else:
+            raise BackendError("Backend Error: User not found after successful check", "500")
 
     def edit_user_control(
         self,

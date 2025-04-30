@@ -43,7 +43,7 @@ class InviteController:
         with db_operation() as data_cursor:
             data_cursor.execute(
                 "INSERT INTO group_invites VALUES (?, ?, ?, ?, ?);",
-                (invite_id, group_id, invitee_id, inviter_id, day_created),
+                (invite_id, group_id, inviter_id, invitee_id, day_created),
             )
         return invite_id
 
@@ -59,37 +59,59 @@ class InviteController:
             raise BackendError("Backend Error: Password is incorrect", "305")
         invites: dict[str, dict] = {}
         with db_operation() as data_cursor:
+            # 1. Fetch all raw invite data
             data_cursor.execute(
-                (
-                    "SELECT invite_id, inviter_id group_id, created_at "
-                    "FROM group_invites WHERE invitee_id = ?;"
-                ),
+                "SELECT invite_id, inviter_id, group_id "
+                "FROM group_invites WHERE invitee_id = ?;",
                 (user_id,),
             )
             invites_data: list[tuple] = data_cursor.fetchall()
+
+            if not invites_data:
+                return {} # Return early if no invites
+
+            # 2. Collect unique IDs
+            group_ids = {item[2] for item in invites_data}
+            inviter_ids = {item[1] for item in invites_data}
+
+            # 3. Fetch group names
+            group_names: dict[str, str] = {}
+            if group_ids:
+                group_placeholders = ",".join("?" * len(group_ids))
+                data_cursor.execute(
+                    f"SELECT uuid, name FROM task_group WHERE uuid IN ({group_placeholders});",
+                    list(group_ids),
+                )
+                group_names = dict(data_cursor.fetchall())
+
+            # 4. Fetch inviter names
+            inviter_names: dict[str, str] = {}
+            if inviter_ids:
+                inviter_placeholders = ",".join("?" * len(inviter_ids))
+                data_cursor.execute(
+                    f"SELECT uuid, username FROM user WHERE uuid IN ({inviter_placeholders});",
+                    list(inviter_ids),
+                )
+                inviter_names = dict(data_cursor.fetchall())
+
+            # 5. Build the final result dictionary
             for invite_item in invites_data:
                 invite_id: str = invite_item[0]
                 inviter_id: str = invite_item[1]
                 group_id: str = invite_item[2]
-                created_at: str = invite_item[3]
-                data_cursor.execute(
-                    "SELECT name FROM task_group WHERE uuid = ?;",
-                    (group_id),
-                )
-                group_name: str = data_cursor.fetchone()[0]
-                data_cursor.execute(
-                    "SELECT username FROM user WHERE uuid = ?;",
-                    (inviter_id),
-                )
-                inviter_name: str = data_cursor.fetchone()[0]
+
+                # Look up names from the fetched dictionaries
+                group_name: str = group_names.get(group_id, "Unknown Group")
+                inviter_name: str = inviter_names.get(inviter_id, "Unknown User")
+
                 invites[invite_id] = {
                     "invite_id": invite_id,
                     "group_id": group_id,
                     "group_name": group_name,
                     "inviter_id": inviter_id,
                     "inviter_name": inviter_name,
-                    "created_at": created_at,
                 }
+
         return invites
 
     def sent_invite_control(

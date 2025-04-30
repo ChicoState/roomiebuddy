@@ -93,13 +93,13 @@ class TaskController:
             raise BackendError("Backend Error: User does not exist", "304")
         if group_id != "0" and not Validator().check_group_exists(group_id):
             raise BackendError("Backend Error: Group does not exist", "306")
-        if Validator().check_password(user_id=assigner_id, password=password):
+        if not Validator().check_password(user_id=assigner_id, password=password):
             raise BackendError("Backend Error: Password is incorrect", "305")
         with db_operation() as data_cursor:
             data_cursor.execute(
                 "UPDATE task SET name = ?, description = ?, due = ?, est_day = ?, "
-                "est_hour = ?, est_min = ?, assigner_uuid = ?, assign_uuid = ?, group_id = ? "
-                "recursive = ?, priority = ?, image_path = ? completed = ? "
+                "est_hour = ?, est_min = ?, assigner_uuid = ?, assign_uuid = ?, group_id = ?, "
+                "recursive = ?, priority = ?, image_path = ?, completed = ? "
                 "WHERE uuid = ?;",
                 (
                     task_name,
@@ -145,17 +145,29 @@ class TaskController:
             task_list: list[tuple] = data_cursor.fetchall()
         new_task_list: dict[str, dict] = {}
         for task in task_list:
+            # Get assigner username
+            assigner_username = "Unknown"
+            with db_operation() as username_cursor:
+                username_cursor.execute("SELECT username FROM user WHERE uuid = ?;", (task[7],))
+                username_result = username_cursor.fetchone()
+                if username_result:
+                    assigner_username = username_result[0]
+                    
             new_task_list[task[0]] = {
                 "name": task[1],
                 "description": task[2],
-                "due": datetime.fromtimestamp(float(task[3])),
+                "due_timestamp": float(task[3]),
                 "est_day": int(task[4]),
                 "est_hour": int(task[5]),
                 "est_min": int(task[6]),
                 "assigner_id": task[7],
+                "assigner_username": assigner_username,
                 "assign_id": task[8],
                 "group_id": task[9],
                 "completed": bool(task[10]),
+                "priority": int(task[11]) if len(task) > 11 else 0,
+                "recursive": int(task[12]) if len(task) > 12 else 0,
+                "image_path": task[13] if len(task) > 13 else "",
             }
         return new_task_list
 
@@ -182,17 +194,29 @@ class TaskController:
             task_list: list[tuple] = data_cursor.fetchall()
         new_task_list: dict[str, dict] = {}
         for task in task_list:
+            # Get assigner username
+            assigner_username = "Unknown"
+            with db_operation() as username_cursor:
+                username_cursor.execute("SELECT username FROM user WHERE uuid = ?;", (task[7],))
+                username_result = username_cursor.fetchone()
+                if username_result:
+                    assigner_username = username_result[0]
+                    
             new_task_list[task[0]] = {
                 "name": task[1],
                 "description": task[2],
-                "due": datetime.fromtimestamp(float(task[3])),
+                "due_timestamp": float(task[3]),
                 "est_day": int(task[4]),
                 "est_hour": int(task[5]),
                 "est_min": int(task[6]),
                 "assigner_id": task[7],
+                "assigner_username": assigner_username,
                 "assign_id": task[8],
                 "group_id": task[9],
                 "completed": bool(task[10]),
+                "priority": int(task[11]) if len(task) > 11 else 0,
+                "recursive": int(task[12]) if len(task) > 12 else 0,
+                "image_path": task[13] if len(task) > 13 else "",
             }
         return new_task_list
 
@@ -224,17 +248,29 @@ class TaskController:
             task_list: list[tuple] = data_cursor.fetchall()
         new_task_list: dict[str, dict] = {}
         for task in task_list:
+            # Get assigner username
+            assigner_username = "Unknown"
+            with db_operation() as username_cursor:
+                username_cursor.execute("SELECT username FROM user WHERE uuid = ?;", (task[7],))
+                username_result = username_cursor.fetchone()
+                if username_result:
+                    assigner_username = username_result[0]
+                    
             new_task_list[task[0]] = {
                 "name": task[1],
                 "description": task[2],
-                "due": datetime.fromtimestamp(float(task[3])),
+                "due_timestamp": float(task[3]),
                 "est_day": int(task[4]),
                 "est_hour": int(task[5]),
                 "est_min": int(task[6]),
                 "assigner_id": task[7],
+                "assigner_username": assigner_username,
                 "assign_id": task[8],
                 "group_id": task[9],
                 "completed": bool(task[10]),
+                "priority": int(task[11]) if len(task) > 11 else 0,
+                "recursive": int(task[12]) if len(task) > 12 else 0,
+                "image_path": task[13] if len(task) > 13 else "",
             }
         return new_task_list
 

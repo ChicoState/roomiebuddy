@@ -12,22 +12,24 @@ class GroupPage extends StatefulWidget {
 }
 
 class _GroupPageState extends State<GroupPage> {
+  // Text editing controllers
   final _userIdController = TextEditingController();
   final _createGroupNameController = TextEditingController();
-  
-  final ApiService _apiService = ApiService();
-  final AuthStorage _authStorage = AuthStorage();
 
-  final Map<String, bool> _loadingInvites = {};
-
+  // User data variables
+  String? _selectedGroupId;
   String _userId = "";
   String _password = "";
-  List<Map<String, dynamic>> _userGroups = [];
-  String? _selectedGroupId;
-  List<Map<String, dynamic>> _pendingInvites = [];
   String _errorMessage = "";
   bool _isLoading = true;
   bool _isSubmitting = false;
+  List<Map<String, dynamic>> _userGroups = [];
+  List<Map<String, dynamic>> _pendingInvites = [];
+  final Map<String, bool> _loadingInvites = {};
+
+  // Services
+  final ApiService _apiService = ApiService();
+  final AuthStorage _authStorage = AuthStorage();
 
   @override
   void initState() {
@@ -53,7 +55,7 @@ class _GroupPageState extends State<GroupPage> {
       final userId = await _authStorage.getUserId();
       final password = await _authStorage.getPassword();
 
-      // Ensure necessary credentials exist
+      // Ensure credentials exist
       if (userId == null || password == null) {
         setState(() {
           _isLoading = false;
@@ -71,7 +73,7 @@ class _GroupPageState extends State<GroupPage> {
           _errorMessage = "Failed to load groups: ${groupsResponse['message']}";
         });
       } else {
-        final groups = groupsResponse['message'] as Map<String, dynamic>;
+        final groups = groupsResponse['data']?['groups'] as Map<String, dynamic>? ?? {};
         _userGroups = groups.values.map((group) => group as Map<String, dynamic>).toList();
         _selectedGroupId = null;
       }
@@ -80,10 +82,12 @@ class _GroupPageState extends State<GroupPage> {
       final invitesResponse = await _apiService.getPendingInvites(userId, password);
       if (!invitesResponse['success']) {
         setState(() {
-          _errorMessage = "Failed to load invites: ${invitesResponse['message']}";
+          _errorMessage = _errorMessage.isNotEmpty
+              ? "$_errorMessage\nFailed to load invites: ${invitesResponse['message']}"
+              : "Failed to load invites: ${invitesResponse['message']}";
         });
       } else {
-        final invites = invitesResponse['message'] as Map<String, dynamic>;
+        final invites = invitesResponse['data']?['invites'] as Map<String, dynamic>? ?? {};
         _pendingInvites = invites.values.map((invite) => invite as Map<String, dynamic>).toList();
       }
     } catch (e) {
@@ -133,7 +137,7 @@ class _GroupPageState extends State<GroupPage> {
         try {
           final groupsResponse = await _apiService.getGroupList(_userId, _password);
           if (groupsResponse['success']) {
-            final groups = groupsResponse['message'] as Map<String, dynamic>;
+            final groups = groupsResponse['data']?['groups'] as Map<String, dynamic>? ?? {};
             if(mounted){
               setState(() {
                 _userGroups = groups.values.map((group) => group as Map<String, dynamic>).toList();
@@ -260,7 +264,7 @@ class _GroupPageState extends State<GroupPage> {
     try {
       final groupsResponse = await _apiService.getGroupList(_userId, _password);
       if (groupsResponse['success']) {
-        final groups = groupsResponse['message'] as Map<String, dynamic>;
+        final groups = groupsResponse['data']?['groups'] as Map<String, dynamic>? ?? {};
         setState(() {
           _userGroups = groups.values.map((group) => group as Map<String, dynamic>).toList();
         });

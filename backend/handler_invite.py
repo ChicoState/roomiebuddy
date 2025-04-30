@@ -6,7 +6,7 @@ from typing import Any
 from flask import Request
 from error import BackendError, handle_backend_exceptions
 from controller_invite import InviteController
-from utils import extract_request_data
+from utils import extract_request_data, db_operation
 
 
 class InviteHandle:
@@ -51,21 +51,40 @@ class InviteHandle:
             request=self.user_request,
             required_fields=[
                 "user_id",
-                "group_id",
+                "invite_id",
+                "status",
                 "password",
-                "accept",
             ],
         )
         user_id: str = request_data["user_id"]
-        group_id: str = request_data["group_id"]
+        invite_id: str = request_data["invite_id"]
         password: str = request_data["password"]
-        accept: bool = request_data["accept"]
+        status: str = request_data["status"]
+        
+        # Get group_id from invite_id
+        group_id = self._get_group_id_from_invite(invite_id, user_id)
+        
+        # Convert status to boolean accept
+        accept = status.lower() == "accepted"
+        
         return InviteController().respond_invite_control(
             user_id=user_id,
             group_id=group_id,
             password=password,
             accept=accept,
         )
+        
+    def _get_group_id_from_invite(self, invite_id: str, user_id: str) -> str:
+        """Get group_id from invite_id."""
+        with db_operation() as data_cursor:
+            data_cursor.execute(
+                "SELECT group_id FROM group_invites WHERE invite_id = ? AND invitee_id = ?;",
+                (invite_id, user_id),
+            )
+            result = data_cursor.fetchone()
+            if not result:
+                raise BackendError("Backend Error: Invite does not exist", "308")
+            return result[0]
 
     @handle_backend_exceptions
     def get_pending_request(self) -> dict[str, dict[str, Any]]:
