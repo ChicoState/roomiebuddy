@@ -164,9 +164,15 @@ class TaskController:
                 "assign_id": task[8],
                 "group_id": task[9],
                 "completed": bool(task[10]),
+<<<<<<< Updated upstream
                 "priority": int(task[11]) if len(task) > 11 else 0,
                 "recursive": int(task[12]) if len(task) > 12 else 0,
                 "image_path": task[13] if len(task) > 13 else "",
+=======
+                "priority": int(task[11]),
+                "recursive": int(task[12]),
+                "image_path": task[13],
+>>>>>>> Stashed changes
             }
         return new_task_list
 
@@ -213,9 +219,15 @@ class TaskController:
                 "assign_id": task[8],
                 "group_id": task[9],
                 "completed": bool(task[10]),
+<<<<<<< Updated upstream
                 "priority": int(task[11]) if len(task) > 11 else 0,
                 "recursive": int(task[12]) if len(task) > 12 else 0,
                 "image_path": task[13] if len(task) > 13 else "",
+=======
+                "priority": int(task[11]),
+                "recursive": int(task[12]),
+                "image_path": task[13],
+>>>>>>> Stashed changes
             }
         return new_task_list
 
@@ -267,9 +279,15 @@ class TaskController:
                 "assign_id": task[8],
                 "group_id": task[9],
                 "completed": bool(task[10]),
+<<<<<<< Updated upstream
                 "priority": int(task[11]) if len(task) > 11 else 0,
                 "recursive": int(task[12]) if len(task) > 12 else 0,
                 "image_path": task[13] if len(task) > 13 else "",
+=======
+                "priority": int(task[11]),
+                "recursive": int(task[12]),
+                "image_path": task[13],
+>>>>>>> Stashed changes
             }
         return new_task_list
 
@@ -277,7 +295,6 @@ class TaskController:
         self,
         task_id: str,
         user_id: str,
-        group_id: str,
         password: str,
         completed: int,
     ) -> None:
@@ -286,10 +303,6 @@ class TaskController:
             raise BackendError("Backend Error: User does not exist", "304")
         if not Validator().check_password(user_id=user_id, password=password):
             raise BackendError("Backend Error: Password is incorrect", "305")
-        if not Validator().check_group_exists(group_id=group_id):
-            raise BackendError("Backend Error: Group does not exist", "306")
-        if not Validator().check_user_in_group(user_id=user_id, group_id=group_id):
-            raise BackendError("Backend Error: User is not in the group", "310")
         if not Validator().check_task_exists(task_id=task_id):
             raise BackendError("Backend Error: Task does not exist", "309")
         with db_operation() as data_cursor:
@@ -300,6 +313,12 @@ class TaskController:
                     task_id,
                 ),
             )
+
+    def get_image_control(self, image_path: str) -> str:
+        """This will get the image."""
+        if not exists(image_path):
+            raise BackendError("Backend Error: Image does not exist", "313")
+        return image_path
 
 
 if __name__ == "__main__":
