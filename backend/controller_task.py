@@ -2,6 +2,7 @@
 """This module controls the task data between the sqlite database."""
 
 from datetime import datetime
+from typing import Any
 from uuid import uuid4
 
 from error import BackendError
@@ -18,49 +19,50 @@ class TaskController:
 
     def add_task_control(
         self,
-        task_name: str,
-        task_description: str,
-        task_due: float,
-        task_est_day: int,
-        task_est_hour: int,
-        task_est_min: int,
-        assigner_id: str,
-        assign_id: str,
-        group_id: str,
-        recursive: int,
-        priority: int,
-        image_path: str,
-        password: str,
+        request_data: dict[str, Any],
     ) -> str:
         """This will add the task."""
         if not Validator().check_user_exists(
-            user_id=assigner_id
-        ) or not Validator().check_user_exists(user_id=assign_id):
+            user_id=request_data["assigner_id"]
+        ) or not Validator().check_user_exists(user_id=request_data["assign_id"]):
             raise BackendError("Backend Error: User does not exist", "304")
-        if group_id != "0" and not Validator().check_group_exists(group_id=group_id):
+        if request_data["group_id"] != "0" and not Validator().check_group_exists(
+            group_id=request_data["group_id"]
+        ):
             raise BackendError("Backend Error: Group does not exist", "306")
-        if not Validator().check_password(user_id=assigner_id, password=password):
+        if not Validator().check_password(
+            user_id=request_data["assigner_id"], password=request_data["password"]
+        ):
             raise BackendError("Backend Error: Password is incorrect", "305")
         task_id: str = str(uuid4())
         while Validator().check_duplicate_id(data_table="task", given_id=task_id):
             task_id = str(uuid4())
+        image_path = "TODO CHANGE HERE"
+        task_due: float = datetime(
+            int(request_data.get("task_due_year", "2000")),
+            int(request_data.get("task_due_month", "1")),
+            int(request_data.get("task_due_date", "1")),
+            int(request_data.get("task_due_hour", "0")),
+            int(request_data.get("task_due_min", "0")),
+            0,
+        ).timestamp()
         with db_operation() as data_cursor:
             data_cursor.execute(
                 "INSERT INTO task VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
                 (
                     task_id,
-                    task_name,
-                    task_description,
+                    request_data["task_name"],
+                    request_data.get("task_description", ""),
                     task_due,
-                    task_est_day,
-                    task_est_hour,
-                    task_est_min,
-                    assigner_id,
-                    assign_id,
-                    group_id,
+                    int(request_data.get("task_est_day", "1")),
+                    int(request_data.get("task_est_hour", "0")),
+                    int(request_data.get("task_est_min", "0")),
+                    request_data["assigner_id"],
+                    request_data["assign_id"],
+                    request_data["group_id"],
                     0,  # completed = 0
-                    priority,
-                    recursive,
+                    int(request_data.get("priority", "0")),
+                    int(request_data.get("recursive", "0")),
                     image_path,
                 ),
             )
@@ -68,33 +70,30 @@ class TaskController:
 
     def edit_task_control(
         self,
-        task_id: str,
-        task_name: str,
-        task_description: str,
-        task_due: float,
-        task_est_day: int,
-        task_est_hour: int,
-        task_est_min: int,
-        assigner_id: str,
-        assign_id: str,
-        group_id: str,
-        recursive: int,
-        priority: int,
-        completed: int,
-        image_path: str,
-        password: str,
+        request_data: dict[str, Any],
     ) -> bool:
         """This will edit the task."""
-        if not Validator().check_task_exists(task_id=task_id):
+        if not Validator().check_task_exists(task_id=request_data["task_id"]):
             raise BackendError("Backend Error: Task does not exist", "309")
         if not Validator().check_user_exists(
-            user_id=assigner_id
-        ) or not Validator().check_user_exists(user_id=assign_id):
+            user_id=request_data["assigner_id"]
+        ) or not Validator().check_user_exists(user_id=request_data["assign_id"]):
             raise BackendError("Backend Error: User does not exist", "304")
-        if group_id != "0" and not Validator().check_group_exists(group_id):
+        if request_data["group_id"] != "0" and not Validator().check_group_exists(
+            request_data["group_id"]
+        ):
             raise BackendError("Backend Error: Group does not exist", "306")
         if not Validator().check_password(user_id=assigner_id, password=password):
             raise BackendError("Backend Error: Password is incorrect", "305")
+        image_path = "TODO CHANGE HERE"
+        task_due: float = datetime(
+            int(request_data.get("task_due_year", "2000")),
+            int(request_data.get("task_due_month", "1")),
+            int(request_data.get("task_due_date", "1")),
+            int(request_data.get("task_due_hour", "0")),
+            int(request_data.get("task_due_min", "0")),
+            0,
+        ).timestamp()
         with db_operation() as data_cursor:
             data_cursor.execute(
                 "UPDATE task SET name = ?, description = ?, due = ?, est_day = ?, "
@@ -102,20 +101,20 @@ class TaskController:
                 "recursive = ?, priority = ?, image_path = ?, completed = ? "
                 "WHERE uuid = ?;",
                 (
-                    task_name,
-                    task_description,
+                    request_data["task_name"],
+                    request_data.get("task_description", ""),
                     task_due,
-                    task_est_day,
-                    task_est_hour,
-                    task_est_min,
-                    assigner_id,
-                    assign_id,
-                    group_id,
-                    recursive,
-                    priority,
+                    int(request_data.get("task_est_day", "1")),
+                    int(request_data.get("task_est_hour", "0")),
+                    int(request_data.get("task_est_min", "0")),
+                    request_data["assigner_id"],
+                    request_data["assign_id"],
+                    request_data["group_id"],
+                    int(request_data.get("recursive", "0")),
+                    int(request_data.get("priority", "0")),
                     image_path,
-                    completed,
-                    task_id,
+                    int(request_data.get("completed", "0")),
+                    request_data["task_id"],
                 ),
             )
         return True
