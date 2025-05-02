@@ -41,7 +41,7 @@ class UserHandle:
         return user_id
 
     @handle_backend_exceptions
-    def login_user_request(self) -> str:
+    def login_user_request(self) -> dict[str, str]:
         """ "Logs in a user."""
         request_data: dict[str, Any] = extract_request_data(
             request=self.user_request,
@@ -52,7 +52,8 @@ class UserHandle:
         )
         email: str = request_data["email"]
         password: str = request_data["password"]
-        return UserController().login_user_control(email=email, password=password)
+        user_info: dict[str, str] = UserController().login_user_control(email=email, password=password)
+        return user_info
 
     @handle_backend_exceptions
     def edit_user_request(self) -> None:

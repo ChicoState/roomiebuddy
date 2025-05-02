@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../common/widget/appbar/appbar.dart';
 import '../providers/theme_provider.dart';
 import 'package:roomiebuddy/services/auth_storage.dart';
+import 'package:roomiebuddy/services/api_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,18 +16,12 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
-  final String _selectedCategory = 'Today';
   bool _isLoading = false;
   List<Map<String, dynamic>> _tasks = [];
-  TextEditingController _searchController = TextEditingController();
-
-  final List<Map<String, dynamic>> roommateGroups = [
-    {"groupName": "Room 101", "members": ["Alice", "Bob", "Charlie"]},
-    {"groupName": "Kitchen Crew", "members": ["Dana", "Eli"]},
-    {"groupName": "Laundry Legends", "members": ["Fred", "Gina", "Harry"]},
-  ];
+  List<Map<String, dynamic>> _roommateGroups = [];
 
   final AuthStorage _authStorage = AuthStorage();
+  final ApiService _apiService = ApiService();
   String? _userId;
   String? _password;
   String _userName = "User";
@@ -46,15 +41,61 @@ class HomePageState extends State<HomePage> {
     _userName = await _authStorage.getUsername() ?? "User";
 
     if (_userId != null && _password != null) {
-      await fetchTasks(_userId!, _password!);
+      await Future.wait([
+        _loadTasks(_userId!, _password!),
+        _loadGroups(_userId!, _password!),
+      ]);
     } else {
-      print("User not logged in.");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please log in to view tasks.')),
         );
       }
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadGroups(String userId, String password) async {
+    try {
+      final response = await _apiService.getGroupList(userId, password);
+      if (response['success']) {
+        final groupsMap = response['data']?['groups'] as Map<String, dynamic>? ?? {};
+        if (mounted) {
+          setState(() {
+            _roommateGroups = groupsMap.values.map((rawGroup) {
+              final group = Map<String, dynamic>.from(rawGroup as Map);
+
+              final List<dynamic> membersData = group['members'] ?? [];
+              final List<Map<String, dynamic>> processedMembers = membersData.map((member) {
+                if (member is Map<String, dynamic>) {
+                  return member;
+                } else if (member is Map) {
+                  return Map<String, dynamic>.from(member);
+                } else {
+                  return {'user_id': 'unknown', 'username': 'Invalid Member Data'};
+                }
+              }).toList();
+              return {
+                ...group,
+                'members': processedMembers,
+                'group_name': group['name'] ?? 'Unnamed Group'
+              };
+            }).toList();
+          });
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to load groups: ${response['message']}')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading groups: $e')),
+        );
+      }
     }
   }
 
@@ -65,7 +106,7 @@ class HomePageState extends State<HomePage> {
     return "Good Evening";
   }
 
-  Future<void> fetchTasks(String userId, String password) async {
+  Future<void> _loadTasks(String userId, String password) async {
     if (!mounted) return;
     setState(() {
       _isLoading = true;
@@ -108,7 +149,7 @@ class HomePageState extends State<HomePage> {
                   return {
                     "id": taskId,
                     "taskName": taskData["name"] ?? "No Task Name",
-                    "assignedBy": taskData["assigner_id"] ?? "Unknown",
+                    "assignedBy": taskData["assigner_username"] ?? taskData["assigner_id"] ?? "Unknown",
                     "priority": priorityStr,
                     "description": taskData["description"] ?? "",
                     "dueDate": dueDateStr,
@@ -122,7 +163,6 @@ class HomePageState extends State<HomePage> {
               });
             }
           } else {
-            print('Backend error: ${firstItem['message']}');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Failed to load tasks: ${firstItem['message']}')),
@@ -130,7 +170,6 @@ class HomePageState extends State<HomePage> {
             }
           }
         } else {
-          print('Unexpected response format from /get_user_task');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Failed to load tasks: Invalid server response.')),
@@ -138,7 +177,6 @@ class HomePageState extends State<HomePage> {
           }
         }
       } else {
-        print('HTTP error ${response.statusCode}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to load tasks: Server error ${response.statusCode}')),
@@ -146,7 +184,6 @@ class HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      print('Error fetching tasks: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error fetching tasks: $e')),
@@ -232,8 +269,7 @@ class HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                color: themeProvider.themeColor,
-                padding: const EdgeInsets.only(bottom: 24),
+                color: Theme.of(context).scaffoldBackgroundColor,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -250,9 +286,18 @@ class HomePageState extends State<HomePage> {
                       ),
                     ),
                     Container(
-                      color: Colors.white.withOpacity(0.05),
+                      color: themeProvider.themeColor,
                       height: 180,
-                      child: _buildGroupCarousel(),
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _roommateGroups.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'No groups found.',
+                                    style: TextStyle(color: themeProvider.currentSecondaryTextColor),
+                                  ),
+                                )
+                              : _buildGroupCarousel(),
                     ),
                   ],
                 ),
@@ -331,6 +376,10 @@ class HomePageState extends State<HomePage> {
 
   Widget _buildGroupCarousel() {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    if (_roommateGroups.isEmpty) {
+      return const Center(child: Text('No groups to display.'));
+    }
+
     return SizedBox(
       height: 140,
       child: CarouselSlider(
@@ -338,9 +387,14 @@ class HomePageState extends State<HomePage> {
           height: 140.0,
           enlargeCenterPage: true,
           autoPlay: false,
-          viewportFraction: 0.85,
+          viewportFraction: 0.6,
         ),
-        items: roommateGroups.map((group) {
+        items: _roommateGroups.map((group) {
+          final List<dynamic> membersData = group['members'] ?? [];
+          final List<String> memberNames = membersData
+              .map((member) => member['username'] as String? ?? 'Unknown')
+              .toList();
+
           return Builder(
             builder: (BuildContext context) {
               return GestureDetector(
@@ -353,13 +407,15 @@ class HomePageState extends State<HomePage> {
                   );
                 },
                 child: Container(
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  height: 120,
                   margin: const EdgeInsets.symmetric(horizontal: 5),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: themeProvider.currentCardBackground,
                     borderRadius: BorderRadius.circular(15),
                     border: Border.all(color: themeProvider.themeColor),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: Colors.black12,
                         blurRadius: 5,
@@ -371,7 +427,7 @@ class HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        group['groupName'],
+                        group['group_name'] ?? 'Unnamed Group',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -380,11 +436,13 @@ class HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Members: ${group['members'].join(', ')}",
+                        "Members: ${memberNames.join(', ')}",
                         style: TextStyle(
                           fontSize: 16,
                           color: themeProvider.currentSecondaryTextColor,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
                       ),
                     ],
                   ),
@@ -442,18 +500,28 @@ class GroupDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final List<dynamic> membersData = group['members'] ?? [];
+    final List<String> memberNames = membersData
+        .map((member) => member['username'] as String? ?? 'Unknown')
+        .toList();
+
     return Scaffold(
-      appBar: AppBar(title: Text(group['groupName'])),
+      appBar: AppBar(title: Text(group['group_name'] ?? 'Group Details')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Group Name: ${group['groupName']}",
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(
+              "Group Name: ${group['group_name'] ?? 'Unnamed Group'}",
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
+            ),
             const SizedBox(height: 20),
-            Text("Members:", style: const TextStyle(fontSize: 20)),
-            ...List<Widget>.from(group['members'].map((m) => Text("- $m"))),
+            const Text("Members:", style: TextStyle(fontSize: 20)),
+            ...memberNames.map((name) => Padding(
+                  padding: const EdgeInsets.only(left: 8.0, top: 4.0),
+                  child: Text("- $name"),
+                )),
           ],
         ),
       ),

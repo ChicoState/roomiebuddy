@@ -246,7 +246,6 @@ class _SignupScreenState extends State<SignupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Registration successful! Please login.'),
-            backgroundColor: Colors.green,
           ),
         );
         

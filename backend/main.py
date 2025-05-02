@@ -4,7 +4,7 @@
 # from os.path import join
 from typing import Any
 
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, send_file
 
 # from werkzeug.utils import secure_filename
 from validator import Validator
@@ -57,10 +57,20 @@ def handle_signup() -> Response:
 @error_handling_decorator("login")
 def handle_login() -> Response:
     """Login a user."""
-    user_id: str = UserHandle(request).login_user_request()
+<<<<<<< Updated upstream
+    user_info: dict[str, str] = UserHandle(request).login_user_request()
+    # Extract user_id and username
+    user_id: str = user_info["user_id"]
+    username: str = user_info["username"]
     return jsonify(
-        [{"error_no": "0", "message": "success", "user_id": user_id}]
+        # Include both user_id and username in the response
+        # (Front end expects this and needs it to store user info)
+        [{"error_no": "0", "message": "success", "user_id": user_id, "username": username}]
     )
+=======
+    user_id: str = UserHandle(request).login_user_request()
+    return jsonify([{"error_no": "0", "message": "success", "user_id": user_id}])
+>>>>>>> Stashed changes
 
 
 @app.route("/edit_user", methods=["POST"])
@@ -111,7 +121,14 @@ def handle_delete_task() -> Response:
 def handle_get_user_task() -> Response:
     """Get all tasks for a user."""
     tasks: dict[str, dict[str, Any]] = TaskHandle(request).get_user_task_request()
-    return jsonify([{"error_no": "0", "message": tasks}])
+    return jsonify([{"error_no": "0", "message": "success", "tasks": tasks}])
+
+
+@app.route("/get_image", methods=["POST"])
+@error_handling_decorator("get_image")
+def handle_get_image() -> Response:
+    """Get an image."""
+    return send_file(TaskHandle(request).get_image_request(), mimetype="image/jpeg")
 
 
 # ----- Group Handlers ----
@@ -122,7 +139,7 @@ def handle_get_user_task() -> Response:
 def handle_get_group_list() -> Response:
     """Get all groups for a user."""
     groups: dict[str, dict[str, Any]] = GroupHandle(request).get_group_list_request()
-    return jsonify([{"error_no": "0", "message": "success", "group_id": groups}])
+    return jsonify([{"error_no": "0", "message": "success", "groups": groups}])
 
 
 @app.route("/create_group", methods=["POST"])
@@ -147,6 +164,14 @@ def handle_delete_group() -> Response:
     """Delete a group."""
     GroupHandle(request).delete_group_request()
     return jsonify([{"error_no": "0", "message": "success"}])
+
+
+@app.route("/get_group_members", methods=["POST"])
+@error_handling_decorator("get_group_members")
+def handle_get_group_members() -> Response:
+    """Get all members of a specific group."""
+    members = GroupHandle(request).get_group_members_request()
+    return jsonify([{"error_no": "0", "message": "success", "members": members}])
 
 
 # ----- Invite Handlers ----

@@ -86,6 +86,16 @@ class TaskHandle:
             user_id=user_id, password=password
         )
 
+    @handle_backend_exceptions
+    def get_image_request(self) -> str:
+        """Gets the image."""
+        request_data: dict[str, Any] = extract_request_data(
+            request=self.user_request,
+            required_fields=["image_path"],
+        )
+        image_path: str = request_data["image_path"]
+        return TaskController().get_image_control(image_path=image_path)
+
 
 if __name__ == "__main__":
     print("This is a module and should not be run directly.")

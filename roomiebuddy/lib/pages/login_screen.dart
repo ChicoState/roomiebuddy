@@ -125,9 +125,8 @@ class _LoginScreenState extends State<LoginScreen> {
         // Navigate to main screen
         _navigateToMainScreen();
       } else {
-        // Show error message
         setState(() {
-          _errorMessage = 'Incorrect email/password or account does not exist';
+          _errorMessage = result['message'] ?? 'An unknown error occurred.'; 
         });
       }
     } catch (e) {

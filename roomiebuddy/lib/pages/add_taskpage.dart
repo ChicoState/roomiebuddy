@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:io'; // Import dart:io for File
+import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:roomiebuddy/providers/theme_provider.dart';
 import 'package:roomiebuddy/utils/data_transformer.dart';
 import 'package:roomiebuddy/services/api_service.dart';
 import 'package:roomiebuddy/services/auth_storage.dart';
-import 'package:image_picker/image_picker.dart'; // Import image_picker
+import 'package:image_picker/image_picker.dart';
 
 class AddTaskpage extends StatefulWidget {
   const AddTaskpage({super.key});
@@ -17,26 +15,30 @@ class AddTaskpage extends StatefulWidget {
 }
 
 class _AddTaskpageState extends State<AddTaskpage> {
+
+  // TextEditingControllers
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _estDaysController = TextEditingController();
+  final TextEditingController _estHoursController = TextEditingController();
+  final TextEditingController _estMinsController = TextEditingController();
+
+  // Task variables
   String? _selectedGroupId;
   String? _selectedMemberId;
   String? _selectedPriority;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
-  final TextEditingController _estDaysController = TextEditingController();
-  final TextEditingController _estHoursController = TextEditingController();
-  final TextEditingController _estMinsController = TextEditingController();
   String? _selectedRecurrence = 'Once';
-
-  // Add state variable for selected image
   File? _selectedImage;
 
+  // For storing users groups and members in selected group
   List<Map<String, dynamic>> _userGroups = [];
   List<Map<String, dynamic>> _groupMembers = [];
   bool _isLoadingGroups = false;
   bool _isLoadingMembers = false;
   bool _isSaving = false;
+  bool _initialDataLoaded = false;
 
   String _userId = "";
   String _password = "";
@@ -47,10 +49,30 @@ class _AddTaskpageState extends State<AddTaskpage> {
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialDataLoaded) {
+      _loadInitialData();
+      _initialDataLoaded = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _estDaysController.dispose();
+    _estHoursController.dispose();
+    _estMinsController.dispose();
+    super.dispose();
+  }
+
+  // Get the users id and password from the auth storage
   Future<void> _loadInitialData() async {
+    setState(() => _isLoadingGroups = true);
     final userId = await _authStorage.getUserId();
     final password = await _authStorage.getPassword();
     if (userId != null && password != null) {
@@ -58,23 +80,26 @@ class _AddTaskpageState extends State<AddTaskpage> {
         _userId = userId;
         _password = password;
       });
-      _loadUserGroups();
+      await _loadUserGroups();
+      setState(() => _isLoadingGroups = false);
     } else {
-       if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error: User not logged in.')),
-          );
-          Navigator.of(context).pop();
-       }
+      setState(() => _isLoadingGroups = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: User not logged in.')),
+        );
+        Navigator.of(context).pop();
+      }
     }
   }
 
   Future<void> _loadUserGroups() async {
     setState(() => _isLoadingGroups = true);
+    
     try {
       final response = await _apiService.getGroupList(_userId, _password);
-      if (response['success'] && mounted) {
-        final groupsMap = response['data']?['message'] as Map<String, dynamic>? ?? {};
+      if (response['success']) {
+        final groupsMap = response['data']?['groups'] as Map<String, dynamic>? ?? {};
         setState(() {
           _userGroups = groupsMap.values.map((group) => group as Map<String, dynamic>).toList();
         });
@@ -92,23 +117,37 @@ class _AddTaskpageState extends State<AddTaskpage> {
         );
       }
     } finally {
-      if (mounted) {
-         setState(() => _isLoadingGroups = false);
-      }
+      setState(() => _isLoadingGroups = false);
     }
   }
 
   Future<void> _loadGroupMembers(String groupId) async {
     setState(() => _isLoadingMembers = true);
+    
     try {
       final response = await _apiService.getGroupMembers(_userId, groupId, _password);
-      if (response['success'] && mounted) {
-        setState(() {
-          _groupMembers = List<Map<String, dynamic>>.from(response['members']);
-        });
+      if (response['success']) {
+        final members = response['members'];
+        if (members is List) {
+          setState(() {
+            _groupMembers = List<Map<String, dynamic>>.from(members.map((member) {
+              if (member is Map<String, dynamic>) {
+                return member;
+              } else {
+                return Map<String, dynamic>.from(member as Map);
+              }
+            }));
+          });
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to load members: Invalid response format')),
+            );
+          }
+        }
       } else {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to load members: ${response['message']}')),
           );
         }
@@ -120,12 +159,11 @@ class _AddTaskpageState extends State<AddTaskpage> {
         );
       }
     } finally {
-       if (mounted) {
-          setState(() => _isLoadingMembers = false);
-       }
+      setState(() => _isLoadingMembers = false);
     }
   }
 
+  // For Date Picker
   Future<void> _selectDate(BuildContext context) async {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
 
@@ -170,6 +208,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
     }
   }
 
+  // For Time Picker
   Future<void> _selectTime(BuildContext context) async {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
 
@@ -218,10 +257,9 @@ class _AddTaskpageState extends State<AddTaskpage> {
     }
   }
 
-  // Function to pick an image
+  // For Image Picker
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    // Pick an image from the gallery
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
@@ -232,16 +270,18 @@ class _AddTaskpageState extends State<AddTaskpage> {
   }
 
   Future<void> _saveTask() async {
+    if (!mounted) return;
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // --- Show SnackBar if image selected but upload not implemented ---
+    // TODO: Implement image upload
     if (_selectedImage != null) {
       scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text('Image selected, but backend upload is not yet implemented.')),
       );
-      // Optionally, you might want to return here if upload is mandatory
-      // return;
     }
+
+    // Ensure we have all the required fields
+    // If the user has not entered certain fields, show a snackbar telling them to enter the next missing field
 
     if (_titleController.text.isEmpty) {
       scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Please enter a task title.')));
@@ -267,28 +307,45 @@ class _AddTaskpageState extends State<AddTaskpage> {
       scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Please select a due time.')));
       return;
     }
+    
+    // Validate that est time inputs contain valid integers
+    if (_estDaysController.text.isNotEmpty && int.tryParse(_estDaysController.text) == null) {
+      scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Days must be an integer value.')));
+      return;
+    }
+    if (_estHoursController.text.isNotEmpty && int.tryParse(_estHoursController.text) == null) {
+      scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Hours must be an integer value.')));
+      return;
+    }
+    if (_estMinsController.text.isNotEmpty && int.tryParse(_estMinsController.text) == null) {
+      scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Minutes must be an integer value.')));
+      return;
+    }
 
+    // Convert est time inputs from objects to ints
     final int estDays = int.tryParse(_estDaysController.text) ?? 0;
     final int estHours = int.tryParse(_estHoursController.text) ?? 0;
     final int estMins = int.tryParse(_estMinsController.text) ?? 0;
 
+    // Map the recurrence value to an int for backend
     final Map<String, int> recurrenceMap = {
       'Once': 0,
       'Daily': 1,
       'Weekly': 2,
       'Monthly': 3,
     };
-    final int recurrenceInt = recurrenceMap[_selectedRecurrence ?? 'Once'] ?? 0;
 
+    final int recurrenceInt = recurrenceMap[_selectedRecurrence ?? 'Once'] ?? 0;
     final double? dueTimestamp = dateTimeToTimestamp(_selectedDate, _selectedTime);
     final int priorityInt = priorityToInt(_selectedPriority);
 
+    // If the date/time is invalid, show a snackbar
     if (dueTimestamp == null) {
       scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Invalid date/time selected.')));
       return;
     }
 
-    setState(() => _isSaving = true);
+    setState(() => _isSaving = true); // Set saving state to true, shows a loading indicator
 
     try {
       final response = await _apiService.post('/add_task', {
@@ -304,13 +361,16 @@ class _AddTaskpageState extends State<AddTaskpage> {
         'task_est_hour': estHours,
         'task_est_min': estMins,
         'recursive': recurrenceInt,
-        'image_path': '' 
+        'image_path': '' // TODO: Implement image upload not via path, but via file
       });
 
-      if (response['success'] && mounted) {
+      if (!mounted) return;
+
+      if (response['success']) {
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('Task added successfully!'), duration: Duration(seconds: 2)),
         );
+        // Clear all the fields if save was successful
         setState(() {
           _titleController.clear();
           _descriptionController.clear();
@@ -324,41 +384,26 @@ class _AddTaskpageState extends State<AddTaskpage> {
           _estHoursController.clear();
           _estMinsController.clear();
           _selectedRecurrence = 'Once';
-          // Clear selected image
           _selectedImage = null;
         });
       } else {
-         if (mounted) {
-            scaffoldMessenger.showSnackBar(
-              SnackBar(content: Text('Failed to add task: ${response['message']}')),
-            );
-         }
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Failed to add task: ${response['message']}')),
+        );
       }
     } catch (e) {
-       if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text('Error adding task: $e')),
-          );
-       }
+      if (!mounted) return;
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error adding task: $e')),
+      );
     } finally {
-       if (mounted) {
-          setState(() => _isSaving = false);
-       }
+       setState(() => _isSaving = false);
     }
   }
 
   @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    _estDaysController.dispose();
-    _estHoursController.dispose();
-    _estMinsController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // Theme and general input styling setup
     final themeProvider = Provider.of<ThemeProvider>(context);
     final inputDecoration = InputDecoration(
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -388,6 +433,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Task Details Section - Title and Description
             Text(
               'Task Details',
               style: TextStyle(
@@ -409,6 +455,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
             ),
             const SizedBox(height: 12),
 
+            // Assignment Section - Group and Member Selection
             Text(
               'Assign To',
               style: TextStyle(
@@ -480,6 +527,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
             ),
             const SizedBox(height: 12),
 
+            // Priority Section - Task Priority Selection
             Text(
               'Priority',
               style: TextStyle(
@@ -510,6 +558,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
              ),
             const SizedBox(height: 12),
 
+            // Due Date & Time Section - Calendar and Time Pickers
             Text(
               'Due Date & Time',
               style: TextStyle(
@@ -554,6 +603,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
             ),
             const SizedBox(height: 12),
 
+            // Estimated Duration Section - Days, Hours, Minutes inputs
             Text(
               'Estimated Duration',
               style: TextStyle(
@@ -592,6 +642,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
             ),
             const SizedBox(height: 12),
 
+            // Recurrence Section - Task repetition pattern
             Text(
               'Recurrence',
               style: TextStyle(
@@ -621,25 +672,26 @@ class _AddTaskpageState extends State<AddTaskpage> {
                 });
               },
             ),
-            const SizedBox(height: 16), // Adjusted spacing slightly
+            const SizedBox(height: 16),
 
+            // Action Buttons - Add Photo and Save Task
             Row(
               children: [
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: themeProvider.themeColor.withOpacity(0.8),
+                    backgroundColor: themeProvider.themeColor,
                     foregroundColor: themeProvider.currentTextColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
-                  onPressed: _pickImage, // Call _pickImage on press
+                  onPressed: _pickImage,
                   // Change icon based on whether an image is selected
                   icon: Icon(
                     _selectedImage == null ? Icons.add_a_photo : Icons.check_circle_outline,
                     size: 18,
                     color: _selectedImage == null
                         ? themeProvider.currentTextColor
-                        : Colors.green, // Indicate success with green check
+                        : Colors.green, // Indicate image uploaded with green check
                   ),
                   label: const Text('Add Photo'),
                 ),
