@@ -52,7 +52,9 @@ class UserHandle:
         )
         email: str = request_data["email"]
         password: str = request_data["password"]
-        user_info: dict[str, str] = UserController().login_user_control(email=email, password=password)
+        user_info: dict[str, str] = UserController().login_user_control(
+            email=email, password=password
+        )
         return user_info
 
     @handle_backend_exceptions

@@ -1,3 +1,4 @@
+# coding: utf-8
 """This module handles the functions related toi invites for database."""
 
 from datetime import datetime, timezone
@@ -68,7 +69,7 @@ class InviteController:
             invites_data: list[tuple] = data_cursor.fetchall()
 
             if not invites_data:
-                return {} # Return early if no invites
+                return {}
 
             # 2. Collect unique IDs
             group_ids = {item[2] for item in invites_data}

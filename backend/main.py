@@ -15,6 +15,7 @@ from handler_user import UserHandle
 from handler_task import TaskHandle
 from handler_group import GroupHandle
 from handler_invite import InviteHandle
+from handler_image import ImageHandle
 
 app: Flask = Flask(__name__)
 
@@ -57,7 +58,6 @@ def handle_signup() -> Response:
 @error_handling_decorator("login")
 def handle_login() -> Response:
     """Login a user."""
-<<<<<<< Updated upstream
     user_info: dict[str, str] = UserHandle(request).login_user_request()
     # Extract user_id and username
     user_id: str = user_info["user_id"]
@@ -65,12 +65,15 @@ def handle_login() -> Response:
     return jsonify(
         # Include both user_id and username in the response
         # (Front end expects this and needs it to store user info)
-        [{"error_no": "0", "message": "success", "user_id": user_id, "username": username}]
+        [
+            {
+                "error_no": "0",
+                "message": "success",
+                "user_id": user_id,
+                "username": username,
+            }
+        ]
     )
-=======
-    user_id: str = UserHandle(request).login_user_request()
-    return jsonify([{"error_no": "0", "message": "success", "user_id": user_id}])
->>>>>>> Stashed changes
 
 
 @app.route("/edit_user", methods=["POST"])
@@ -122,13 +125,6 @@ def handle_get_user_task() -> Response:
     """Get all tasks for a user."""
     tasks: dict[str, dict[str, Any]] = TaskHandle(request).get_user_task_request()
     return jsonify([{"error_no": "0", "message": "success", "tasks": tasks}])
-
-
-@app.route("/get_image", methods=["POST"])
-@error_handling_decorator("get_image")
-def handle_get_image() -> Response:
-    """Get an image."""
-    return send_file(TaskHandle(request).get_image_request(), mimetype="image/jpeg")
 
 
 # ----- Group Handlers ----
@@ -215,6 +211,22 @@ def handle_sent_invite() -> Response:
     """Get all sent invites for a user."""
     invites: dict[str, dict[str, Any]] = InviteHandle(request).sent_invite_request()
     return jsonify([{"error_no": "0", "message": "success", "invites": invites}])
+
+
+# ----- File Download ----
+
+
+@app.route("/get_user_image", methods=["POST"])
+@error_handling_decorator("get_user_image")
+def handle_get_user_image() -> Response:
+    """Get an image."""
+    return send_file(ImageHandle(request).get_user_image_request(), mimetype="image/jpeg")
+
+@app.route("/get_task_image", methods=["POST"])
+@error_handling_decorator("get_task_image")
+def handle_get_task_image() -> Response:
+    """Get an image."""
+    return send_file(ImageHandle(request).get_task_image_request(), mimetype="image/jpeg")
 
 
 if __name__ == "__main__":

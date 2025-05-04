@@ -18,7 +18,8 @@ CREATE_TASK_TABLE: str = (
 CREATE_USER_TABLE: str = (
     "CREATE TABLE IF NOT EXISTS user"
     "(uuid TEXT PRIMARY KEY, username TEXT NOT NULL, "
-    "email TEXT NOT NULL, password TEXT NOT NULL);"
+    "email TEXT NOT NULL, password TEXT NOT NULL, "
+    "image_path TEXT);"
 )
 CREATE_GROUP_TABLE: str = (
     "CREATE TABLE IF NOT EXISTS task_group"
@@ -57,7 +58,7 @@ class Validator:
 
             if (
                 len(data_cursor.execute("SELECT * FROM task;").description) != 14
-                or len(data_cursor.execute("SELECT * FROM user;").description) != 4
+                or len(data_cursor.execute("SELECT * FROM user;").description) != 5
                 or len(data_cursor.execute("SELECT * FROM task_group;").description)
                 != 4
                 or len(data_cursor.execute("SELECT * FROM group_user;").description)

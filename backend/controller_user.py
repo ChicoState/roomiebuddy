@@ -16,7 +16,9 @@ class UserController:
         """Initialize the UserController class."""
         return
 
-    def add_user_control(self, username: str, email: str, password: str) -> str:
+    def add_user_control(
+        self, username: str, email: str, password: str, image_url: str
+    ) -> str:
         """This function creates a new user."""
         user_id: str = str(uuid4())
         while Validator().check_duplicate_id(data_table="user", given_id=user_id):
@@ -27,8 +29,8 @@ class UserController:
             raise BackendError("Backend Error: Email already exists", "302")
         with db_operation() as data_cursor:
             data_cursor.execute(
-                "INSERT INTO user VALUES (?, ?, ?, ?);",
-                (user_id, username, email, password),
+                "INSERT INTO user VALUES (?, ?, ?, ?, ?);",
+                (user_id, username, email, password, image_url),
             )
         return user_id
 
@@ -49,7 +51,9 @@ class UserController:
         if user_data:
             return {"user_id": user_data[0], "username": user_data[1]}
         else:
-            raise BackendError("Backend Error: User not found after successful check", "500")
+            raise BackendError(
+                "Backend Error: User not found after successful check", "500"
+            )
 
     def edit_user_control(
         self,
@@ -68,11 +72,15 @@ class UserController:
             raise BackendError("Backend Error: Password is incorrect", "305")
         with db_operation() as data_cursor:
             data_cursor.execute(
-                "UPDATE user SET username = ?, email = ?, password = ? WHERE uuid = ?;",
+                (
+                    "UPDATE user SET username = ?, email = ?, "
+                    "password = ? image_url = ? WHERE uuid = ?;"
+                ),
                 (
                     request_data["username"],
                     request_data["email"],
                     request_data["password"],
+                    request_data["image_url"],
                     request_data["user_id"],
                 ),
             )

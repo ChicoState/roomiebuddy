@@ -59,12 +59,8 @@ sqlite3 error codes
 310: "User is not in the group"
     The user is not in the group. Please check the group id and try again.
 311: "Invitee already has an invite"
-<<<<<<< Updated upstream
-    The invitee already has an invite. Please check the group id and try again.
-=======
     The invitee already has an invite. Please check the group id and try again.
 312: "invalid file type"
     The file type is not supported. Please check the file type and try again.
 313: "File not found"
     The file was not found. Please check the file id and try again.
->>>>>>> Stashed changes

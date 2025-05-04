@@ -4,17 +4,17 @@ import 'package:http/http.dart' as http;
 class ApiService {
   // BASE URL
   static const String baseUrl = 'http://10.0.2.2:5000';
-  
+
   // HTTP client
   final http.Client _client = http.Client();
 
   // Singleton pattern implC
   static final ApiService _instance = ApiService._internal();
-  
+
   factory ApiService() {
     return _instance;
   }
-  
+
   ApiService._internal();
 
   // Generic GET request method
@@ -24,7 +24,7 @@ class ApiService {
         Uri.parse('$baseUrl$endpoint'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 10));
-      
+
       return _handleResponse(response);
     } catch (e) {
       return _handleError(e);
@@ -39,7 +39,7 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(data),
       ).timeout(const Duration(seconds: 10));
-      
+
       return _handleResponse(response);
     } catch (e) {
       return _handleError(e);
@@ -47,7 +47,7 @@ class ApiService {
   }
 
   // AUTH METHODS
-  
+
   // User signup
   Future<Map<String, dynamic>> signup(String username, String email, String password) async {
     return await post('/signup', {
@@ -66,7 +66,7 @@ class ApiService {
   }
 
   // TASK METHODS
-  
+
   // Get user tasks
   Future<Map<String, dynamic>> getUserTasks(String userId, String password) async {
     return await post('/get_user_task', {
@@ -184,9 +184,9 @@ class ApiService {
 
   // Create a new group
   Future<Map<String, dynamic>> createGroup(
-    String userId, 
-    String password, 
-    String groupName, 
+    String userId,
+    String password,
+    String groupName,
     String description
   ) async {
     return await post('/create_group', {
@@ -199,8 +199,8 @@ class ApiService {
 
   // Leave a group
   Future<Map<String, dynamic>> leaveGroup(
-    String userId, 
-    String password, 
+    String userId,
+    String password,
     String groupId
   ) async {
     return await post('/leave_group', {
@@ -212,8 +212,8 @@ class ApiService {
 
   // Delete a group
   Future<Map<String, dynamic>> deleteGroup(
-    String userId, 
-    String password, 
+    String userId,
+    String password,
     String groupId
   ) async {
     return await post('/delete_group', {
@@ -225,9 +225,9 @@ class ApiService {
 
   // Invite a user to a group
   Future<Map<String, dynamic>> inviteToGroup(
-    String inviterId, 
-    String inviteeId, 
-    String groupId, 
+    String inviterId,
+    String inviteeId,
+    String groupId,
     String password
   ) async {
     return await post('/create_invite', {
@@ -248,9 +248,9 @@ class ApiService {
 
   // Respond to a group invitation
   Future<Map<String, dynamic>> respondToInvite(
-    String userId, 
-    String inviteId, 
-    String status, 
+    String userId,
+    String inviteId,
+    String status,
     String password
   ) async {
     return await post('/respond_invite', {
@@ -266,7 +266,7 @@ class ApiService {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       // Success
       List<dynamic> responseData = jsonDecode(response.body);
-      
+
       if (responseData.isNotEmpty) {
         Map<String, dynamic> firstItem = responseData[0];
         return {

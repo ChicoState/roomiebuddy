@@ -83,7 +83,9 @@ class TaskController:
             request_data["group_id"]
         ):
             raise BackendError("Backend Error: Group does not exist", "306")
-        if not Validator().check_password(user_id=assigner_id, password=password):
+        if not Validator().check_password(
+            user_id=request_data["assigner_id"], password=request_data["password"]
+        ):
             raise BackendError("Backend Error: Password is incorrect", "305")
         image_path = "TODO CHANGE HERE"
         task_due: float = datetime(
@@ -147,11 +149,13 @@ class TaskController:
             # Get assigner username
             assigner_username = "Unknown"
             with db_operation() as username_cursor:
-                username_cursor.execute("SELECT username FROM user WHERE uuid = ?;", (task[7],))
+                username_cursor.execute(
+                    "SELECT username FROM user WHERE uuid = ?;", (task[7],)
+                )
                 username_result = username_cursor.fetchone()
                 if username_result:
                     assigner_username = username_result[0]
-                    
+
             new_task_list[task[0]] = {
                 "name": task[1],
                 "description": task[2],
@@ -164,15 +168,9 @@ class TaskController:
                 "assign_id": task[8],
                 "group_id": task[9],
                 "completed": bool(task[10]),
-<<<<<<< Updated upstream
                 "priority": int(task[11]) if len(task) > 11 else 0,
                 "recursive": int(task[12]) if len(task) > 12 else 0,
                 "image_path": task[13] if len(task) > 13 else "",
-=======
-                "priority": int(task[11]),
-                "recursive": int(task[12]),
-                "image_path": task[13],
->>>>>>> Stashed changes
             }
         return new_task_list
 
@@ -202,11 +200,13 @@ class TaskController:
             # Get assigner username
             assigner_username = "Unknown"
             with db_operation() as username_cursor:
-                username_cursor.execute("SELECT username FROM user WHERE uuid = ?;", (task[7],))
+                username_cursor.execute(
+                    "SELECT username FROM user WHERE uuid = ?;", (task[7],)
+                )
                 username_result = username_cursor.fetchone()
                 if username_result:
                     assigner_username = username_result[0]
-                    
+
             new_task_list[task[0]] = {
                 "name": task[1],
                 "description": task[2],
@@ -219,15 +219,9 @@ class TaskController:
                 "assign_id": task[8],
                 "group_id": task[9],
                 "completed": bool(task[10]),
-<<<<<<< Updated upstream
                 "priority": int(task[11]) if len(task) > 11 else 0,
                 "recursive": int(task[12]) if len(task) > 12 else 0,
                 "image_path": task[13] if len(task) > 13 else "",
-=======
-                "priority": int(task[11]),
-                "recursive": int(task[12]),
-                "image_path": task[13],
->>>>>>> Stashed changes
             }
         return new_task_list
 
@@ -262,11 +256,13 @@ class TaskController:
             # Get assigner username
             assigner_username = "Unknown"
             with db_operation() as username_cursor:
-                username_cursor.execute("SELECT username FROM user WHERE uuid = ?;", (task[7],))
+                username_cursor.execute(
+                    "SELECT username FROM user WHERE uuid = ?;", (task[7],)
+                )
                 username_result = username_cursor.fetchone()
                 if username_result:
                     assigner_username = username_result[0]
-                    
+
             new_task_list[task[0]] = {
                 "name": task[1],
                 "description": task[2],
@@ -279,15 +275,9 @@ class TaskController:
                 "assign_id": task[8],
                 "group_id": task[9],
                 "completed": bool(task[10]),
-<<<<<<< Updated upstream
                 "priority": int(task[11]) if len(task) > 11 else 0,
                 "recursive": int(task[12]) if len(task) > 12 else 0,
                 "image_path": task[13] if len(task) > 13 else "",
-=======
-                "priority": int(task[11]),
-                "recursive": int(task[12]),
-                "image_path": task[13],
->>>>>>> Stashed changes
             }
         return new_task_list
 
@@ -313,12 +303,6 @@ class TaskController:
                     task_id,
                 ),
             )
-
-    def get_image_control(self, image_path: str) -> str:
-        """This will get the image."""
-        if not exists(image_path):
-            raise BackendError("Backend Error: Image does not exist", "313")
-        return image_path
 
 
 if __name__ == "__main__":
