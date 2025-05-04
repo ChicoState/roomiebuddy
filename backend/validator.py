@@ -1,8 +1,9 @@
 # coding: utf-8
 """This function checks if the given data is valid."""
 
-from utils import db_operation
+from os import makedirs
 
+from utils import db_operation
 from error import BackendError
 
 CREATE_TASK_TABLE: str = (
@@ -37,6 +38,8 @@ CREATE_GROUP_INVITES_TABLE: str = (
     "inviter_id TEXT NOT NULL, invitee_id TEXT NOT NULL, "
     "day_created REAL NOT NULL);"
 )
+UPLOAD_FOLDER: str = "data/images"
+ALLOWED_EXTENSIONS: set[str] = {"png", "jpg", "jpeg"}
 
 
 class Validator:
@@ -48,6 +51,8 @@ class Validator:
 
     def initializer(self) -> None:
         """This function initializes to create the database."""
+
+        makedirs(UPLOAD_FOLDER, exist_ok=True)
 
         with db_operation() as data_cursor:
             data_cursor.execute(CREATE_TASK_TABLE)

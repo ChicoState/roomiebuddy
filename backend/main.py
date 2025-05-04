@@ -1,7 +1,6 @@
 # coding: utf-8
 """This file will create the server and accept the backend processes."""
 
-# from os.path import join
 from typing import Any
 
 from flask import Flask, request, jsonify, Response, send_file
@@ -59,18 +58,13 @@ def handle_signup() -> Response:
 def handle_login() -> Response:
     """Login a user."""
     user_info: dict[str, str] = UserHandle(request).login_user_request()
-    # Extract user_id and username
-    user_id: str = user_info["user_id"]
-    username: str = user_info["username"]
     return jsonify(
-        # Include both user_id and username in the response
-        # (Front end expects this and needs it to store user info)
         [
             {
                 "error_no": "0",
                 "message": "success",
-                "user_id": user_id,
-                "username": username,
+                "user_id": user_info["user_id"],
+                "username": user_info["username"],
             }
         ]
     )
@@ -213,20 +207,73 @@ def handle_sent_invite() -> Response:
     return jsonify([{"error_no": "0", "message": "success", "invites": invites}])
 
 
-# ----- File Download ----
+# ----- File Upload Download ----
 
 
 @app.route("/get_user_image", methods=["POST"])
 @error_handling_decorator("get_user_image")
 def handle_get_user_image() -> Response:
     """Get an image."""
-    return send_file(ImageHandle(request).get_user_image_request(), mimetype="image/jpeg")
+    return send_file(
+        ImageHandle(request).get_user_image_request(), mimetype="image/jpeg"
+    )
+
 
 @app.route("/get_task_image", methods=["POST"])
 @error_handling_decorator("get_task_image")
 def handle_get_task_image() -> Response:
     """Get an image."""
-    return send_file(ImageHandle(request).get_task_image_request(), mimetype="image/jpeg")
+    return send_file(
+        ImageHandle(request).get_task_image_request(), mimetype="image/jpeg"
+    )
+
+
+@app.route("/upload_user_image", methods=["POST"])
+@error_handling_decorator("upload_user_image")
+def handle_upload_user_image() -> Response:
+    """Upload an image."""
+    image_url: str = ImageHandle(request).upload_user_image_request()
+    return jsonify([{"error_no": "0", "message": "success", "image_url": image_url}])
+
+
+@app.route("/upload_task_image", methods=["POST"])
+@error_handling_decorator("upload_task_image")
+def handle_upload_task_image() -> Response:
+    """Upload an image."""
+    image_url: str = ImageHandle(request).upload_task_image_request()
+    return jsonify([{"error_no": "0", "message": "success", "image_url": image_url}])
+
+
+@app.route("/edit_user_image", methods=["POST"])
+@error_handling_decorator("edit_user_image")
+def handle_edit_user_image() -> Response:
+    """Edit an image."""
+    image_url: str = ImageHandle(request).edit_user_image_request()
+    return jsonify([{"error_no": "0", "message": "success", "image_url": image_url}])
+
+
+@app.route("/edit_task_image", methods=["POST"])
+@error_handling_decorator("edit_task_image")
+def handle_edit_task_image() -> Response:
+    """Edit an image."""
+    image_url: str = ImageHandle(request).edit_task_image_request()
+    return jsonify([{"error_no": "0", "message": "success", "image_url": image_url}])
+
+
+@app.route("/delete_user_image", methods=["POST"])
+@error_handling_decorator("delete_user_image")
+def handle_delete_user_image() -> Response:
+    """Delete an image."""
+    ImageHandle(request).delete_user_image_request()
+    return jsonify([{"error_no": "0", "message": "success"}])
+
+
+@app.route("/delete_task_image", methods=["POST"])
+@error_handling_decorator("delete_task_image")
+def handle_delete_task_image() -> Response:
+    """Delete an image."""
+    ImageHandle(request).delete_task_image_request()
+    return jsonify([{"error_no": "0", "message": "success"}])
 
 
 if __name__ == "__main__":

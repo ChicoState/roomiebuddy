@@ -21,24 +21,6 @@ class ImageHandle:
                 error_code="100",
             )
 
-    # @handle_backend_exceptions
-    # def get_image_request(self) -> str:
-    #     """Downloads an image."""
-    #     request_data: dict[str, Any] = extract_request_data(
-    #         request=self.user_request,
-    #         required_fields=[
-    #             "image_url",
-    #             "user_id",
-    #             "password",
-    #         ],
-    #     )
-    #     return ImageController().get_image_control(
-    #         image_url=request_data["image_url"],
-    #         user_id=request_data["user_id"],
-    #         password=request_data["password"],
-    #         group_id=request_data.get("group_id", "0"),
-    #     )
-
     @handle_backend_exceptions
     def get_user_image_request(self) -> str:
         """Gets the user image."""
@@ -65,14 +47,139 @@ class ImageHandle:
                 "image_url",
                 "user_id",
                 "password",
+                "task_id",
+                "group_id",
             ],
         )
         return ImageController().get_task_image_control(
-            image_url=request_data["image_url"],
+            request_data=request_data,
+        )
+
+    @handle_backend_exceptions
+    def upload_user_image_request(self) -> str:
+        """Uploads the user image."""
+        if "file" not in self.user_request.files:
+            raise BackendError(
+                message="No file part in the request",
+                error_code="314",
+            )
+        file = self.user_request.files["file"]
+        request_data: dict[str, Any] = extract_request_data(
+            request=self.user_request,
+            required_fields=[
+                "image_url",
+                "user_id",
+                "password",
+            ],
+        )
+        return ImageController().upload_user_image_control(
             user_id=request_data["user_id"],
             password=request_data["password"],
-            task_id=request_data["task_id"],
-            group_id=request_data.get("group_id", "0"),
+            file=file,
+        )
+
+    @handle_backend_exceptions
+    def upload_task_image_request(self) -> str:
+        """Uploads the task image."""
+        if "file" not in self.user_request.files:
+            raise BackendError(
+                message="No file part in the request",
+                error_code="314",
+            )
+        file = self.user_request.files["file"]
+        request_data: dict[str, Any] = extract_request_data(
+            request=self.user_request,
+            required_fields=[
+                "image_url",
+                "user_id",
+                "password",
+                "task_id",
+                "group_id",
+            ],
+        )
+        return ImageController().upload_task_image_control(
+            request_data=request_data,
+            file=file,
+        )
+
+    @handle_backend_exceptions
+    def edit_user_image_request(self) -> str:
+        """Edits the user image."""
+        if "file" not in self.user_request.files:
+            raise BackendError(
+                message="No file part in the request",
+                error_code="314",
+            )
+        file = self.user_request.files["file"]
+        request_data: dict[str, Any] = extract_request_data(
+            request=self.user_request,
+            required_fields=[
+                "image_url",
+                "user_id",
+                "password",
+            ],
+        )
+        return ImageController().edit_user_image_control(
+            user_id=request_data["user_id"],
+            password=request_data["password"],
+            file=file,
+        )
+
+    @handle_backend_exceptions
+    def edit_task_image_request(self) -> str:
+        """Edits the task image."""
+        if "file" not in self.user_request.files:
+            raise BackendError(
+                message="No file part in the request",
+                error_code="314",
+            )
+        file = self.user_request.files["file"]
+        request_data: dict[str, Any] = extract_request_data(
+            request=self.user_request,
+            required_fields=[
+                "image_url",
+                "user_id",
+                "password",
+                "task_id",
+                "group_id",
+            ],
+        )
+        return ImageController().edit_task_image_control(
+            request_data=request_data,
+            file=file,
+        )
+
+    @handle_backend_exceptions
+    def delete_user_image_request(self) -> None:
+        """Deletes the user image."""
+        request_data: dict[str, Any] = extract_request_data(
+            request=self.user_request,
+            required_fields=[
+                "image_url",
+                "user_id",
+                "password",
+            ],
+        )
+        ImageController().delete_user_image_control(
+            user_id=request_data["user_id"],
+            password=request_data["password"],
+        )
+
+    @handle_backend_exceptions
+    def delete_task_image_request(self) -> None:
+        """Deletes the task image."""
+        request_data: dict[str, Any] = extract_request_data(
+            request=self.user_request,
+            required_fields=[
+                "image_url",
+                "user_id",
+                "password",
+                "task_id",
+                "group_id",
+            ],
+        )
+        ImageController().delete_task_image_control(
+            request_data=request_data,
         )
 
 
