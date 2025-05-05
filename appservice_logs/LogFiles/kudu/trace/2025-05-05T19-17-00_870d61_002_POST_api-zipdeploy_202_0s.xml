@@ -1,0 +1,20 @@
+<step title="Incoming Request" date="2025-05-05T19:17:00.526" instance="870d61" url="/api/zipdeploy?isAsync=true" method="POST" type="request" pid="768,1,7" Accept="*/*" Host="msdocs-python-webapp-quickstart-rmb.scm.azurewebsites.net" User-Agent="AZURECLI/2.71.0 (HOMEBREW)" Accept-Encoding="gzip, deflate" Authorization="Bas..." Cache-Control="no-cache" Content-Type="application/octet-stream" Content-Length="71219" x-ms-client-request-id="596c4b66-29e5-11f0-b3cc-a661e4a37991" x-ms-artifact-checksum="79b745c60bb578b5a49216a084415e2ad6371daf766f357c3e55884802bf8a9a" X-ARR-LOG-ID="596c4b66-29e5-11f0-b3cc-a661e4a37991" CLIENT-IP="132.241.174.213:21625" X-SITE-DEPLOYMENT-ID="msdocs-python-webapp-quickstart-rmb" WAS-DEFAULT-HOSTNAME="msdocs-python-webapp-quickstart-rmb.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/zipdeploy?isAsync=true" X-Client-IP="132.241.174.213" X-Client-Port="21625" >
+  <step title="ZipPushDeploy" date="2025-05-05T19:17:00.728" >
+    <step title="ZipDeploy. Extract zip. Remote build." date="2025-05-05T19:17:00.742" /><!-- duration: 3ms -->
+    <step title="None repository commit" date="2025-05-05T19:17:00.754" >
+      <step title="Commit id: 00c9c262-5fed-4fb0-88d7-36d91b7e3d39" date="2025-05-05T19:17:00.757" Message="N/A" AuthorName="N/A" AuthorEmail="N/A" /><!-- duration: 4ms -->
+    </step><!-- duration: 9ms -->
+    <step title="Starting PushDeployAsync" date="2025-05-05T19:17:00.769" /><!-- duration: 3ms -->
+    <step title="Error occurred" date="2025-05-05T19:17:00.804" type="error" text="Error removing symlink: Path doesn&apos;t exist!" stackTrace="   at Mono.Unix.UnixFileSystemInfo.AssertValid()
+   at Mono.Unix.UnixFileSystemInfo.get_FileType()
+   at Kudu.Services.Deployment.PushDeploymentController.PushDeployAsync(ArtifactDeploymentInfo deploymentInfo, Boolean isAsync, HttpContext context, JObject requestJson) in /tmp/KuduLite/Kudu.Services/Deployment/PushDeploymentController.cs:line 740" /><!-- duration: 9ms -->
+    <step title="Writing artifact to /tmp/zipdeploy/f9255220-1a8d-4fc6-9418-d778b2401029.zip" date="2025-05-05T19:17:00.818" >
+      <step title="Writing multipart request body to /tmp/zipdeploy/f9255220-1a8d-4fc6-9418-d778b2401029.zip" date="2025-05-05T19:17:00.827" /><!-- duration: 2ms -->
+    </step><!-- duration: 27ms -->
+    <step title="Start deployment in the background" date="2025-05-05T19:17:00.854" >
+      <step title="Acquiring Deployment Lock" date="2025-05-05T19:17:00.868" /><!-- duration: 2ms -->
+      <step title="Acquired Deployment Lock" date="2025-05-05T19:17:00.918" /><!-- duration: 3ms -->
+    </step><!-- duration: 147ms -->
+  </step><!-- duration: 278ms -->
+  <step title="Outgoing response" date="2025-05-05T19:17:01.013" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 2ms -->
+</step><!-- duration: 492ms -->

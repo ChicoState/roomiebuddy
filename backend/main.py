@@ -57,7 +57,6 @@ def handle_signup() -> Response:
 @error_handling_decorator("login")
 def handle_login() -> Response:
     """Login a user."""
-<<<<<<< Updated upstream
     user_info: dict[str, str] = UserHandle(request).login_user_request()
     # Extract user_id and username
     user_id: str = user_info["user_id"]
@@ -67,10 +66,6 @@ def handle_login() -> Response:
         # (Front end expects this and needs it to store user info)
         [{"error_no": "0", "message": "success", "user_id": user_id, "username": username}]
     )
-=======
-    user_id: str = UserHandle(request).login_user_request()
-    return jsonify([{"error_no": "0", "message": "success", "user_id": user_id}])
->>>>>>> Stashed changes
 
 
 @app.route("/edit_user", methods=["POST"])
@@ -121,6 +116,14 @@ def handle_delete_task() -> Response:
 def handle_get_user_task() -> Response:
     """Get all tasks for a user."""
     tasks: dict[str, dict[str, Any]] = TaskHandle(request).get_user_task_request()
+    return jsonify([{"error_no": "0", "message": "success", "tasks": tasks}])
+
+
+@app.route("/get_group_task", methods=["POST"])
+@error_handling_decorator("get_group_task")
+def handle_get_group_task() -> Response:
+    """Get all tasks for a specific group."""
+    tasks: dict[str, dict[str, Any]] = TaskHandle(request).get_group_task_request()
     return jsonify([{"error_no": "0", "message": "success", "tasks": tasks}])
 
 

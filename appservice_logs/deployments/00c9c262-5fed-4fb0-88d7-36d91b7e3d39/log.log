@@ -1,0 +1,103 @@
+2025-05-05T19:17:04.5367109Z,Updating submodules.,de3dbd92-b845-41b7-8442-26c1c0b2764a,0
+2025-05-05T19:17:05.9156942Z,Preparing deployment for commit id '00c9c262-5'.,5fceedae-25ac-40fc-a431-44bbb3f50de9,0
+2025-05-05T19:17:06.1083519Z,PreDeployment: context.CleanOutputPath False,ee624d2c-5268-4166-b4c6-85d7b564d969,0
+2025-05-05T19:17:06.1721967Z,PreDeployment: context.OutputPath /home/site/wwwroot,8a1ef3be-3167-474d-95b7-46c69f22eddc,0
+2025-05-05T19:17:06.3195445Z,Repository path is /tmp/zipdeploy/extracted,f91b6150-19b9-44fe-b24d-3acef5365d2f,0
+2025-05-05T19:17:06.3875451Z,Running oryx build...,78f69326-50ce-48c8-ba5b-6be6c578933d,0
+	2025-05-05T19:17:06.3928139Z,Command: oryx build /tmp/zipdeploy/extracted -o /home/site/wwwroot --platform python --platform-version 3.10 -p virtualenv_name=antenv --log-file /tmp/build-debug.log  -i /tmp/8dd8c096c8b2d70 --compress-destination-dir | tee /tmp/oryx-build.log,,0
+	2025-05-05T19:17:07.0742322Z,Operation performed by Microsoft Oryx&comma; https://github.com/Microsoft/Oryx,,0
+	2025-05-05T19:17:07.0816026Z,You can report issues at https://github.com/Microsoft/Oryx/issues,,0
+	2025-05-05T19:17:07.0928213Z,,,0
+	2025-05-05T19:17:07.1006696Z,Oryx Version: 0.2.20250107.1+ef3fb2f9c490a4fbb1f76b5746cd4ba2ff0409f4&comma; Commit: ef3fb2f9c490a4fbb1f76b5746cd4ba2ff0409f4&comma; ReleaseTagName: 20250107.1,,0
+	2025-05-05T19:17:07.1076851Z,,,0
+	2025-05-05T19:17:07.1165886Z,Build Operation ID: 0bf5a6b10c464f0d,,0
+	2025-05-05T19:17:07.1243416Z,Repository Commit : 00c9c262-5fed-4fb0-88d7-36d91b7e3d39,,0
+	2025-05-05T19:17:07.1297690Z,OS Type           : bullseye,,0
+	2025-05-05T19:17:07.1367418Z,Image Type        : githubactions,,0
+	2025-05-05T19:17:07.1435562Z,,,0
+	2025-05-05T19:17:07.1519233Z,Detecting platforms...,,0
+	2025-05-05T19:17:07.6661693Z,Detected following platforms:,,0
+	2025-05-05T19:17:07.6763926Z,  python: 3.10.17,,0
+	2025-05-05T19:17:07.6814200Z,Version '3.10.17' of platform 'python' is not installed. Generating script to install it...,,0
+	2025-05-05T19:17:07.7707859Z,,,0
+	2025-05-05T19:17:07.7922682Z,Using intermediate directory '/tmp/8dd8c096c8b2d70'.,,0
+	2025-05-05T19:17:07.8000236Z,,,0
+	2025-05-05T19:17:07.8106748Z,Copying files to the intermediate directory...,,0
+	2025-05-05T19:17:07.8817109Z,Done in 0 sec(s).,,0
+	2025-05-05T19:17:07.8904193Z,,,0
+	2025-05-05T19:17:07.8980479Z,Source directory     : /tmp/8dd8c096c8b2d70,,0
+	2025-05-05T19:17:07.9189602Z,Destination directory: /home/site/wwwroot,,0
+	2025-05-05T19:17:07.9307659Z,,,0
+	2025-05-05T19:17:07.9488312Z,,,0
+	2025-05-05T19:17:07.9542319Z,Downloading and extracting 'python' version '3.10.17' to '/tmp/oryx/platforms/python/3.10.17'...,,0
+	2025-05-05T19:17:07.9601580Z,Detected image debian flavor: bullseye.,,0
+	2025-05-05T19:17:10.2709940Z,Downloaded in 3 sec(s).,,0
+	2025-05-05T19:17:10.3088531Z,Verifying checksum...,,0
+	2025-05-05T19:17:10.3426547Z,Extracting contents...,,0
+	2025-05-05T19:17:14.6262426Z,performing sha512 checksum for: python...,,0
+	2025-05-05T19:17:14.9572297Z,Done in 7 sec(s).,,0
+	2025-05-05T19:17:14.9650256Z,,,0
+	2025-05-05T19:17:14.9845790Z,image detector file exists&comma; platform is python..,,0
+	2025-05-05T19:17:14.9927820Z,OS detector file exists&comma; OS is bullseye..,,0
+	2025-05-05T19:17:15.0824438Z,Python Version: /tmp/oryx/platforms/python/3.10.17/bin/python3.10,,0
+	2025-05-05T19:17:15.0895718Z,Creating directory for command manifest file if it does not exist,,0
+	2025-05-05T19:17:15.1105138Z,Removing existing manifest file,,0
+	2025-05-05T19:17:15.1190665Z,Python Virtual Environment: antenv,,0
+	2025-05-05T19:17:15.1256738Z,Creating virtual environment...,,0
+	2025-05-05T19:17:18.3418133Z,Activating virtual environment...,,0
+	2025-05-05T19:17:18.3783851Z,Running pip install...,,0
+	2025-05-05T19:17:22.3653505Z,[19:17:19+0000] Collecting blinker==1.9.0,,0
+	2025-05-05T19:17:22.3857878Z,[19:17:19+0000]   Downloading blinker-1.9.0-py3-none-any.whl (8.5 kB),,0
+	2025-05-05T19:17:22.4097567Z,[19:17:19+0000] Collecting click==8.1.8,,0
+	2025-05-05T19:17:22.4384090Z,[19:17:19+0000]   Downloading click-8.1.8-py3-none-any.whl (98 kB),,0
+	2025-05-05T19:17:22.4506519Z,[19:17:19+0000]      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 98.2/98.2 kB 4.1 MB/s eta 0:00:00,,0
+	2025-05-05T19:17:22.4592714Z,[19:17:19+0000] Collecting colorama==0.4.6,,0
+	2025-05-05T19:17:22.4657052Z,[19:17:19+0000]   Downloading colorama-0.4.6-py2.py3-none-any.whl (25 kB),,0
+	2025-05-05T19:17:22.4739377Z,[19:17:19+0000] Collecting Flask==3.1.0,,0
+	2025-05-05T19:17:22.4819570Z,[19:17:19+0000]   Downloading flask-3.1.0-py3-none-any.whl (102 kB),,0
+	2025-05-05T19:17:22.5025173Z,[19:17:19+0000]      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 103.0/103.0 kB 12.5 MB/s eta 0:00:00,,0
+	2025-05-05T19:17:22.5120936Z,[19:17:19+0000] Collecting itsdangerous==2.2.0,,0
+	2025-05-05T19:17:22.5202653Z,[19:17:19+0000]   Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB),,0
+	2025-05-05T19:17:22.5290525Z,[19:17:20+0000] Collecting Jinja2==3.1.6,,0
+	2025-05-05T19:17:22.5379789Z,[19:17:20+0000]   Downloading jinja2-3.1.6-py3-none-any.whl (134 kB),,0
+	2025-05-05T19:17:22.5596313Z,[19:17:20+0000]      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.9/134.9 kB 18.5 MB/s eta 0:00:00,,0
+	2025-05-05T19:17:22.5680555Z,[19:17:20+0000] Collecting MarkupSafe==3.0.2,,0
+	2025-05-05T19:17:22.5781414Z,[19:17:20+0000]   Downloading MarkupSafe-3.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (20 kB),,0
+	2025-05-05T19:17:22.5836391Z,[19:17:20+0000] Collecting pytz==2025.2,,0
+	2025-05-05T19:17:22.5944709Z,[19:17:20+0000]   Downloading pytz-2025.2-py2.py3-none-any.whl (509 kB),,0
+	2025-05-05T19:17:22.6056521Z,[19:17:20+0000]      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 509.2/509.2 kB 19.2 MB/s eta 0:00:00,,0
+	2025-05-05T19:17:22.6280268Z,[19:17:20+0000] Collecting Werkzeug==3.1.3,,0
+	2025-05-05T19:17:22.6451274Z,[19:17:20+0000]   Downloading werkzeug-3.1.3-py3-none-any.whl (224 kB),,0
+	2025-05-05T19:17:22.6684151Z,[19:17:20+0000]      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 224.5/224.5 kB 39.9 MB/s eta 0:00:00,,0
+	2025-05-05T19:17:22.6803987Z,[19:17:21+0000] Installing collected packages: pytz&comma; MarkupSafe&comma; itsdangerous&comma; colorama&comma; click&comma; blinker&comma; Werkzeug&comma; Jinja2&comma; Flask,,0
+	2025-05-05T19:17:22.6870664Z,[19:17:22+0000] Successfully installed Flask-3.1.0 Jinja2-3.1.6 MarkupSafe-3.0.2 Werkzeug-3.1.3 blinker-1.9.0 click-8.1.8 colorama-0.4.6 itsdangerous-2.2.0 pytz-2025.2,,0
+	2025-05-05T19:17:22.6941647Z,,,0
+	2025-05-05T19:17:22.7080932Z,[notice] A new release of pip is available: 23.0.1 -> 25.1.1,,0
+	2025-05-05T19:17:22.7181540Z,[notice] To update&comma; run: pip install --upgrade pip,,0
+	2025-05-05T19:17:22.7331385Z,Not a vso image&comma; so not writing build commands,,0
+	2025-05-05T19:17:22.7432342Z,Preparing output...,,0
+	2025-05-05T19:17:22.7605242Z,,,0
+	2025-05-05T19:17:22.7773301Z,Copying files to destination directory '/tmp/_preCompressedDestinationDir'...,,0
+	2025-05-05T19:17:23.1845753Z,Done in 1 sec(s).,,0
+	2025-05-05T19:17:23.1993554Z,Compressing content of directory '/tmp/_preCompressedDestinationDir'...,,0
+	2025-05-05T19:17:24.6560208Z,Copied the compressed output to '/home/site/wwwroot',,0
+	2025-05-05T19:17:24.7052856Z,,,0
+	2025-05-05T19:17:24.7150280Z,Removing existing manifest file,,0
+	2025-05-05T19:17:24.7238893Z,Creating a manifest file...,,0
+	2025-05-05T19:17:24.7328270Z,Manifest file created.,,0
+	2025-05-05T19:17:24.7380821Z,Copying .ostype to manifest output directory.,,0
+	2025-05-05T19:17:24.7450571Z,,,0
+	2025-05-05T19:17:24.7519152Z,Done in 17 sec(s).,,0
+2025-05-05T19:17:25.1157876Z,Running post deployment command(s)...,823f060d-59d6-4e26-862d-7272dee2eb75,0
+2025-05-05T19:17:25.1823277Z,,9ca189b3-1914-4655-ad14-a831e45b959c,0
+2025-05-05T19:17:25.2463247Z,Generating summary of Oryx build,e009db63-3535-4548-b51e-0f74b4969183,0
+2025-05-05T19:17:25.3527029Z,Parsing the build logs,88216918-715c-4210-9aa5-9d0ddddb11b5,0
+2025-05-05T19:17:25.4500464Z,Found 0 issue(s),0f6b7e10-7dc7-4e34-8e82-8199738cdf16,0
+2025-05-05T19:17:25.5618546Z,,b33daa74-bfb5-47d6-8d7f-842989209312,0
+2025-05-05T19:17:25.6326232Z,Build Summary :,b2fe12da-5fdc-4fd2-851a-369310fcde91,0
+2025-05-05T19:17:25.7001984Z,===============,a3de1b18-eb02-452e-8407-c029a6e2f757,0
+2025-05-05T19:17:25.7651899Z,Errors (0),a9173eb6-9dd7-4444-91cf-c3d4a82ffb58,0
+2025-05-05T19:17:25.8256469Z,Warnings (0),3bc3ca2d-23ad-45ec-b06c-14a97189b5a7,0
+2025-05-05T19:17:25.8855955Z,,1615e5ef-6e98-4ba4-a1cc-4d4cb1b83bbe,0
+2025-05-05T19:17:25.9796508Z,Triggering recycle (preview mode disabled).,3869912d-0786-4fe6-88c4-884e17b4cd15,0
+2025-05-05T19:17:26.0944225Z,Deployment successful. deployer = Push-Deployer deploymentPath = ZipDeploy. Extract zip. Remote build.,bd7b213d-7741-4baa-bd4e-bc3444d5936f,0

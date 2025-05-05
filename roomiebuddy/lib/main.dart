@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:roomiebuddy/pages/login_screen.dart';
+import 'package:roomiebuddy/pages/subpages/auth/login_screen.dart';
 import 'package:roomiebuddy/providers/theme_provider.dart';
 
 void main() {

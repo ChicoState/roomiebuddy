@@ -1,0 +1,80 @@
+2025-05-05T19:17:51.8360525Z    _____                               
+2025-05-05T19:17:51.8387064Z   /  _  \ __________ _________   ____  
+2025-05-05T19:17:51.8387358Z  /  /_\  \\___   /  |  \_  __ \_/ __ \ 
+2025-05-05T19:17:51.8387461Z /    |    \/    /|  |  /|  | \/\  ___/ 
+2025-05-05T19:17:51.8388642Z \____|__  /_____ \____/ |__|    \___  >
+2025-05-05T19:17:51.8388720Z         \/      \/                  \/ 
+2025-05-05T19:17:51.8388775Z A P P   S E R V I C E   O N   L I N U X
+2025-05-05T19:17:51.8388816Z 
+2025-05-05T19:17:51.8388869Z Documentation: http://aka.ms/webapp-linux
+2025-05-05T19:17:51.8388922Z Python 3.10.16
+2025-05-05T19:17:51.8388960Z Note: Any data outside '/home' is not persisted
+2025-05-05T19:17:53.0262476Z Starting OpenBSD Secure Shell server: sshd.
+2025-05-05T19:17:53.0262921Z WEBSITES_INCLUDE_CLOUD_CERTS is not set to true.
+2025-05-05T19:17:53.0262963Z Updating certificates in /etc/ssl/certs...
+2025-05-05T19:17:53.7725931Z 2 added, 0 removed; done.
+2025-05-05T19:17:53.7726600Z Running hooks in /etc/ca-certificates/update.d...
+2025-05-05T19:17:53.7747355Z done.
+2025-05-05T19:17:53.7764774Z CA certificates copied and updated successfully.
+2025-05-05T19:17:53.7973879Z App Command Line not configured, will attempt auto-detect
+2025-05-05T19:17:54.0174525Z Starting periodic command scheduler: cron.
+2025-05-05T19:17:54.0178380Z Launching oryx with: create-script -appPath /home/site/wwwroot -output /opt/startup/startup.sh -virtualEnvName antenv -defaultApp /opt/defaultsite
+2025-05-05T19:17:54.0971751Z Found build manifest file at '/home/site/wwwroot/oryx-manifest.toml'. Deserializing it...
+2025-05-05T19:17:54.0998037Z Build Operation ID: 0bf5a6b10c464f0d
+2025-05-05T19:17:54.1004103Z Output is compressed. Extracting it...
+2025-05-05T19:17:54.1004103Z Oryx Version: 0.2.20250121.2, Commit: d363b83aad8365d7e91cc246d6dfb3ddad209ddb, ReleaseTagName: 20250121.2
+2025-05-05T19:17:54.1017783Z Extracting '/home/site/wwwroot/output.tar.gz' to directory '/tmp/8dd8c096c8b2d70'...
+2025-05-05T19:17:54.7542578Z App path is set to '/tmp/8dd8c096c8b2d70'
+2025-05-05T19:17:54.7542901Z No framework detected; using default app from /opt/defaultsite
+2025-05-05T19:17:54.7543237Z Generating `gunicorn` command for 'application:app'
+2025-05-05T19:17:54.9603867Z Writing output script to '/opt/startup/startup.sh'
+2025-05-05T19:17:56.8833780Z Using packages from virtual environment antenv located at /tmp/8dd8c096c8b2d70/antenv.
+2025-05-05T19:17:56.8834102Z Updated PYTHONPATH to '/agents/python:/opt/startup/app_logs:/tmp/8dd8c096c8b2d70/antenv/lib/python3.10/site-packages'
+2025-05-05T19:17:58.1019375Z [2025-05-05 19:17:58 +0000] [1045] [INFO] Starting gunicorn 23.0.0
+2025-05-05T19:17:58.1149444Z [2025-05-05 19:17:58 +0000] [1045] [INFO] Listening at: http://0.0.0.0:8000 (1045)
+2025-05-05T19:17:58.1149856Z [2025-05-05 19:17:58 +0000] [1045] [INFO] Using worker: sync
+2025-05-05T19:17:58.1237539Z [2025-05-05 19:17:58 +0000] [1058] [INFO] Booting worker with pid: 1058
+2025-05-05T19:17:59.0421230Z 169.254.129.1 - - [05/May/2025:19:17:59 +0000] "GET /robots933456.txt HTTP/1.1" 404 207 "-" "HealthCheck/1.0"
+2025-05-05T19:17:59.0743324Z 169.254.129.1 - - [05/May/2025:19:17:59 +0000] "GET /robots933456.txt HTTP/1.1" 404 207 "-" "HealthCheck/1.0"
+2025-05-05T19:18:00.0053057Z 169.254.129.1 - - [05/May/2025:19:17:59 +0000] "GET / HTTP/1.1" 200 0 "-" "ReadyForRequest/1.0 (LocalCache)"
+2025-05-05T19:18:00.0528981Z 169.254.129.1 - - [05/May/2025:19:18:00 +0000] "GET / HTTP/1.1" 200 0 "-" "ReadyForRequest/1.0 (AppInit)"
+2025-05-05T19:18:10.1394732Z 169.254.129.1 - - [05/May/2025:19:18:10 +0000] "GET / HTTP/1.1" 200 0 "-" "python-urllib3/1.26.19"
+2025-05-05T19:18:10.3987699Z 169.254.129.1 - - [05/May/2025:19:18:10 +0000] "GET / HTTP/1.1" 200 0 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:138.0) Gecko/20100101 Firefox/138.0"
+2025-05-05T19:19:27.5164144Z 169.254.129.1 - - [05/May/2025:19:19:27 +0000] "GET /favicon.ico HTTP/1.1" 404 207 "https://msdocs-python-webapp-quickstart-rmb.azurewebsites.net/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:138.0) Gecko/20100101 Firefox/138.0"
+2025-05-05T19:19:29.0063973Z 169.254.129.1 - - [05/May/2025:19:19:28 +0000] "GET / HTTP/1.1" 304 0 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:138.0) Gecko/20100101 Firefox/138.0"
+2025-05-05T19:20:47.4336461Z    _____                               
+2025-05-05T19:20:47.4337876Z   /  _  \ __________ _________   ____  
+2025-05-05T19:20:47.4337928Z  /  /_\  \\___   /  |  \_  __ \_/ __ \ 
+2025-05-05T19:20:47.4337947Z /    |    \/    /|  |  /|  | \/\  ___/ 
+2025-05-05T19:20:47.4337964Z \____|__  /_____ \____/ |__|    \___  >
+2025-05-05T19:20:47.4337990Z         \/      \/                  \/ 
+2025-05-05T19:20:47.4338007Z A P P   S E R V I C E   O N   L I N U X
+2025-05-05T19:20:47.4338051Z 
+2025-05-05T19:20:47.4338074Z Documentation: http://aka.ms/webapp-linux
+2025-05-05T19:20:47.4338094Z Python 3.10.16
+2025-05-05T19:20:47.4338114Z Note: Any data outside '/home' is not persisted
+2025-05-05T19:20:47.9853268Z Starting OpenBSD Secure Shell server: sshd.
+2025-05-05T19:20:47.9969621Z WEBSITES_INCLUDE_CLOUD_CERTS is not set to true.
+2025-05-05T19:20:48.0225846Z Updating certificates in /etc/ssl/certs...
+2025-05-05T19:20:50.1148729Z 2 added, 0 removed; done.
+2025-05-05T19:20:50.1149550Z Running hooks in /etc/ca-certificates/update.d...
+2025-05-05T19:20:50.1169011Z done.
+2025-05-05T19:20:50.1224381Z CA certificates copied and updated successfully.
+2025-05-05T19:20:50.1887369Z Site's appCommandLine: gunicorn --bind=0.0.0.0 --timeout 600 main:app
+2025-05-05T19:20:50.3910131Z Starting periodic command scheduler: cron.
+2025-05-05T19:20:50.3912304Z Launching oryx with: create-script -appPath /home/site/wwwroot -output /opt/startup/startup.sh -virtualEnvName antenv -defaultApp /opt/defaultsite -userStartupCommand 'gunicorn --bind=0.0.0.0 --timeout 600 main:app'
+2025-05-05T19:20:50.4811707Z Found build manifest file at '/home/site/wwwroot/oryx-manifest.toml'. Deserializing it...
+2025-05-05T19:20:50.4836111Z Build Operation ID: 0bf5a6b10c464f0d
+2025-05-05T19:20:50.4838925Z Output is compressed. Extracting it...
+2025-05-05T19:20:50.4839189Z Oryx Version: 0.2.20250121.2, Commit: d363b83aad8365d7e91cc246d6dfb3ddad209ddb, ReleaseTagName: 20250121.2
+2025-05-05T19:20:50.4854600Z Extracting '/home/site/wwwroot/output.tar.gz' to directory '/tmp/8dd8c096c8b2d70'...
+2025-05-05T19:20:51.1289065Z App path is set to '/tmp/8dd8c096c8b2d70'
+2025-05-05T19:20:51.3927172Z Writing output script to '/opt/startup/startup.sh'
+2025-05-05T19:20:53.5147632Z Using packages from virtual environment antenv located at /tmp/8dd8c096c8b2d70/antenv.
+2025-05-05T19:20:53.5148287Z Updated PYTHONPATH to '/agents/python:/opt/startup/app_logs:/tmp/8dd8c096c8b2d70/antenv/lib/python3.10/site-packages'
+2025-05-05T19:20:54.7037155Z [2025-05-05 19:20:54 +0000] [1044] [INFO] Starting gunicorn 23.0.0
+2025-05-05T19:20:54.7046045Z [2025-05-05 19:20:54 +0000] [1044] [INFO] Listening at: http://0.0.0.0:8000 (1044)
+2025-05-05T19:20:54.7049491Z [2025-05-05 19:20:54 +0000] [1044] [INFO] Using worker: sync
+2025-05-05T19:20:54.7111569Z [2025-05-05 19:20:54 +0000] [1055] [INFO] Booting worker with pid: 1055
+2025-05-05T19:21:15.1610720Z [2025-05-05 19:21:15 +0000] [1058] [INFO] Worker exiting (pid: 1058)
+2025-05-05T19:21:15.8809815Z [2025-05-05 19:21:15 +0000] [1045] [INFO] Handling signal: term

@@ -1,0 +1,4 @@
+2025-05-05T19:17:00  Startup Request, url: /api/zipdeploy?isAsync=true, method: POST, type: request, pid: 768,1,7, SCM_DO_BUILD_DURING_DEPLOYMENT: true, ScmType: None
+2025-05-05T19:17:00      Error occurred, type: error, text: Error removing symlink: Path doesn't exist!, stackTrace:    at Mono.Unix.UnixFileSystemInfo.AssertValid()
+   at Mono.Unix.UnixFileSystemInfo.get_FileType()
+   at Kudu.Services.Deployment.PushDeploymentController.PushDeployAsync(ArtifactDeploymentInfo deploymentInfo, Boolean isAsync, HttpContext context, JObject requestJson) in /tmp/KuduLite/Kudu.Services/Deployment/PushDeploymentController.cs:line 740

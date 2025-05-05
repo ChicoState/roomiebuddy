@@ -97,7 +97,7 @@ class TaskController:
         with db_operation() as data_cursor:
             data_cursor.execute(
                 "UPDATE task SET name = ?, description = ?, due = ?, est_day = ?, "
-                "est_hour = ?, est_min = ?, assigner_uuid = ?, assign_uuid = ?, group_id = ?, "
+                "est_hour = ?, est_min = ?, assigner_uuid = ?, assign_uuid = ?, group_uuid = ?, "
                 "recursive = ?, priority = ?, image_path = ?, completed = ? "
                 "WHERE uuid = ?;",
                 (
@@ -151,6 +151,14 @@ class TaskController:
                 username_result = username_cursor.fetchone()
                 if username_result:
                     assigner_username = username_result[0]
+            
+            # Get assignee username
+            assignee_username = "Unknown"
+            with db_operation() as username_cursor:
+                username_cursor.execute("SELECT username FROM user WHERE uuid = ?;", (task[8],))
+                username_result = username_cursor.fetchone()
+                if username_result:
+                    assignee_username = username_result[0]
                     
             new_task_list[task[0]] = {
                 "name": task[1],
@@ -162,17 +170,12 @@ class TaskController:
                 "assigner_id": task[7],
                 "assigner_username": assigner_username,
                 "assign_id": task[8],
+                "assignee_username": assignee_username,
                 "group_id": task[9],
                 "completed": bool(task[10]),
-<<<<<<< Updated upstream
                 "priority": int(task[11]) if len(task) > 11 else 0,
                 "recursive": int(task[12]) if len(task) > 12 else 0,
                 "image_path": task[13] if len(task) > 13 else "",
-=======
-                "priority": int(task[11]),
-                "recursive": int(task[12]),
-                "image_path": task[13],
->>>>>>> Stashed changes
             }
         return new_task_list
 
@@ -192,10 +195,7 @@ class TaskController:
         if not Validator().check_user_in_group(user_id=user_id, group_id=group_id):
             raise BackendError("Backend Error: User is not in the group", "310")
         with db_operation() as data_cursor:
-            data_cursor.execute(
-                "SELECT * FROM task WHERE group_id = ?;",
-                (group_id),
-            )
+            data_cursor.execute("SELECT * FROM task WHERE group_uuid = ?;", (group_id,))
             task_list: list[tuple] = data_cursor.fetchall()
         new_task_list: dict[str, dict] = {}
         for task in task_list:
@@ -207,6 +207,14 @@ class TaskController:
                 if username_result:
                     assigner_username = username_result[0]
                     
+            # Get assignee username
+            assignee_username = "Unknown"
+            with db_operation() as username_cursor:
+                username_cursor.execute("SELECT username FROM user WHERE uuid = ?;", (task[8],))
+                username_result = username_cursor.fetchone()
+                if username_result:
+                    assignee_username = username_result[0]
+                    
             new_task_list[task[0]] = {
                 "name": task[1],
                 "description": task[2],
@@ -217,17 +225,12 @@ class TaskController:
                 "assigner_id": task[7],
                 "assigner_username": assigner_username,
                 "assign_id": task[8],
+                "assignee_username": assignee_username,
                 "group_id": task[9],
                 "completed": bool(task[10]),
-<<<<<<< Updated upstream
                 "priority": int(task[11]) if len(task) > 11 else 0,
                 "recursive": int(task[12]) if len(task) > 12 else 0,
                 "image_path": task[13] if len(task) > 13 else "",
-=======
-                "priority": int(task[11]),
-                "recursive": int(task[12]),
-                "image_path": task[13],
->>>>>>> Stashed changes
             }
         return new_task_list
 
@@ -249,7 +252,7 @@ class TaskController:
         with db_operation() as data_cursor:
             data_cursor.execute(
                 "SELECT * FROM task WHERE assign_id = ? "
-                "OR group_id IN (SELECT group_id FROM group_user WHERE user_id = ?) "
+                "OR group_uuid IN (SELECT group_uuid FROM group_user WHERE user_id = ?) "
                 "AND completed = 1;",
                 (
                     group_id,
@@ -279,15 +282,9 @@ class TaskController:
                 "assign_id": task[8],
                 "group_id": task[9],
                 "completed": bool(task[10]),
-<<<<<<< Updated upstream
                 "priority": int(task[11]) if len(task) > 11 else 0,
                 "recursive": int(task[12]) if len(task) > 12 else 0,
                 "image_path": task[13] if len(task) > 13 else "",
-=======
-                "priority": int(task[11]),
-                "recursive": int(task[12]),
-                "image_path": task[13],
->>>>>>> Stashed changes
             }
         return new_task_list
 

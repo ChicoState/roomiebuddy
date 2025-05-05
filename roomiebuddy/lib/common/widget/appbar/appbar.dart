@@ -26,6 +26,8 @@ class TAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       automaticallyImplyLeading: false,
+      elevation: 0,
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       leading: showBackArrow
           ? IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.arrow_back))
           : leadingIcon != null

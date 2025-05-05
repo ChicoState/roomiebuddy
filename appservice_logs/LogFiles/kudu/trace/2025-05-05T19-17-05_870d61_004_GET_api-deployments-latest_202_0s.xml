@@ -1,0 +1,9 @@
+<step title="Incoming Request" date="2025-05-05T19:17:05.443" instance="870d61" url="/api/deployments/latest" method="GET" type="request" pid="768,1,5" Accept="*/*" Host="msdocs-python-webapp-quickstart-rmb.scm.azurewebsites.net" User-Agent="AZURECLI/2.71.0 (HOMEBREW)" Accept-Encoding="gzip, deflate" Authorization="Bas..." x-ms-client-request-id="596c4b66-29e5-11f0-b3cc-a661e4a37991" X-ARR-LOG-ID="596c4b66-29e5-11f0-b3cc-a661e4a37991" CLIENT-IP="132.241.174.213:24133" X-SITE-DEPLOYMENT-ID="msdocs-python-webapp-quickstart-rmb" WAS-DEFAULT-HOSTNAME="msdocs-python-webapp-quickstart-rmb.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/deployments/latest" X-Client-IP="132.241.174.213" X-Client-Port="24133" >
+  <step title="Cleanup Xml Logs" date="2025-05-05T19:17:05.448" /><!-- duration: 8ms -->
+  <step title="DeploymentService.GetResult" date="2025-05-05T19:17:05.478" >
+    <step title="DeploymentService.GetLatestDeployment" date="2025-05-05T19:17:05.480" >
+      <step title="DeploymentManager.GetResults" date="2025-05-05T19:17:05.482" /><!-- duration: 123ms -->
+    </step><!-- duration: 138ms -->
+  </step><!-- duration: 152ms -->
+  <step title="Outgoing response" date="2025-05-05T19:17:05.693" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 3ms -->
+</step><!-- duration: 257ms -->
