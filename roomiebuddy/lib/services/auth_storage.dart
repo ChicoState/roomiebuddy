@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:flutter/foundation.dart' show debugPrint;
 class AuthStorage {
   // Keys for SharedPreferences
   static const String _userIdKey = 'user_id';
@@ -26,7 +26,7 @@ class AuthStorage {
       await prefs.setString(_usernameKey, username);
       return true;
     } catch (e) {
-      print('Error storing user credentials: $e');
+      debugPrint('Error storing user credentials: $e');
       return false;
     }
   }
@@ -37,7 +37,7 @@ class AuthStorage {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(_userIdKey);
     } catch (e) {
-      print('Error getting user ID: $e');
+      debugPrint('Error getting user ID: $e');
       return null;
     }
   }
@@ -48,7 +48,7 @@ class AuthStorage {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(_emailKey);
     } catch (e) {
-      print('Error getting email: $e');
+      debugPrint('Error getting email: $e');
       return null;
     }
   }
@@ -59,7 +59,7 @@ class AuthStorage {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(_passwordKey);
     } catch (e) {
-      print('Error getting password: $e');
+      debugPrint('Error getting password: $e');
       return null;
     }
   }
@@ -70,7 +70,7 @@ class AuthStorage {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(_usernameKey);
     } catch (e) {
-      print('Error getting username: $e');
+      debugPrint('Error getting username: $e');
       return null;
     }
   }
@@ -86,8 +86,8 @@ class AuthStorage {
       final password = prefs.getString(_passwordKey);
       final username = prefs.getString(_usernameKey);
       
-      // For development/debugging - remove or set to false in production
-      print("Auth check: UserId=$userId, Email=$email, Username=$username");
+      // For development/debugging - REMEMBER: remove or set to false in production (proabably wont happen)
+      debugPrint("Auth check: UserId=$userId, Email=$email, Username=$username");
       
       // Ensure all values exist and aren't empty
       return userId != null && userId.isNotEmpty && 
@@ -95,7 +95,7 @@ class AuthStorage {
              password != null && password.isNotEmpty &&
              username != null && username.isNotEmpty;
     } catch (e) {
-      print('Error checking login status: $e');
+      debugPrint('Error checking login status: $e');
       return false;
     }
   }
@@ -110,7 +110,7 @@ class AuthStorage {
       await prefs.remove(_usernameKey);
       return true;
     } catch (e) {
-      print('Error clearing user credentials: $e');
+      debugPrint('Error clearing user credentials: $e');
       return false;
     }
   }

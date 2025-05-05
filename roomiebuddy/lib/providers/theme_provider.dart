@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  bool _isDarkMode = true; // GLOBAL DARK MODE FLAG
-  Color _themeColor = Colors.blueGrey; // GLOBAL THEME COLOR
+  bool _isDarkMode = true; // Dark mode set to default
+  Color _themeColor = Colors.blueGrey; // Global theme color
 
   // Utility colors (Theme independent)
   Color get errorColor => Colors.red;
@@ -32,12 +32,12 @@ class ThemeProvider extends ChangeNotifier {
   Color get switchInactiveTrack => Colors.grey[300]!;
 
     // Circle colors (Main background)
-  Color get primaryHeaderColor => _themeColor.withOpacity(0.8);
-  Color get primaryHeaderOverlayColor => Colors.white.withOpacity(0.1);
+  Color get primaryHeaderColor => _themeColor.withAlpha(204);
+  Color get primaryHeaderOverlayColor => Colors.white.withAlpha(26);
   
   // Calendar colors
   Color get calendarSelectedDayColor => _themeColor;
-  Color get calendarTodayColor => _themeColor.withOpacity(0.5);
+  Color get calendarTodayColor => _themeColor.withAlpha(128);
   Color get calendarWeekendTextColor => _isDarkMode ? darkTextColor : lightTextColor;
   Color get calendarDefaultTextColor => _isDarkMode ? darkTextColor : lightTextColor;
   Color get calendarSelectedDayTextColor => _isDarkMode ? darkBackground : Colors.white;
@@ -63,7 +63,7 @@ class ThemeProvider extends ChangeNotifier {
     final secondaryTextColor = isDark ? darkTextSecondary : lightTextSecondary;
     final borderColor = isDark ? darkBorder : lightBorder;
     final inputFillColor = isDark ? darkWidgetBackground : lightInputFill;
-    final appBarBgColor = isDark ? _themeColor.withOpacity(0.8) : _themeColor;
+    final appBarBgColor = isDark ? _themeColor.withAlpha(204) : _themeColor;
     
     return ThemeData(
       brightness: isDark ? Brightness.dark : Brightness.light,

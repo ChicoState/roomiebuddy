@@ -15,7 +15,6 @@ class AddTaskpage extends StatefulWidget {
 }
 
 class _AddTaskpageState extends State<AddTaskpage> {
-
   // TextEditingControllers
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -70,7 +69,8 @@ class _AddTaskpageState extends State<AddTaskpage> {
     super.dispose();
   }
 
-  // Get the users id and password from the auth storage
+  // ------- Backend Communication Methods ------- //
+
   Future<void> _loadInitialData() async {
     setState(() => _isLoadingGroups = true);
     final userId = await _authStorage.getUserId();
@@ -163,112 +163,6 @@ class _AddTaskpageState extends State<AddTaskpage> {
     }
   }
 
-  // For Date Picker
-  Future<void> _selectDate(BuildContext context) async {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime(2101),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: themeProvider.isDarkMode
-              ? ColorScheme.dark(
-                  primary: themeProvider.themeColor,
-                  onPrimary: themeProvider.currentTextColor,
-                  surface: themeProvider.currentInputFill,
-                  onSurface: themeProvider.currentTextColor,
-                )
-              : ColorScheme.light(
-                  primary: themeProvider.themeColor,
-                  onPrimary: themeProvider.currentTextColor,
-                  surface: themeProvider.currentInputFill,
-                  onSurface: themeProvider.currentTextColor,
-                ),
-            dialogTheme: DialogTheme(
-              backgroundColor: themeProvider.currentInputFill,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: themeProvider.themeColor,
-              ),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
-
-  // For Time Picker
-  Future<void> _selectTime(BuildContext context) async {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: themeProvider.isDarkMode
-              ? ColorScheme.dark(
-                  primary: themeProvider.themeColor,
-                  onPrimary: themeProvider.currentTextColor,
-                  surface: themeProvider.currentInputFill,
-                  onSurface: themeProvider.currentTextColor,
-                )
-              : ColorScheme.light(
-                  primary: themeProvider.themeColor,
-                  onPrimary: themeProvider.currentTextColor,
-                  surface: themeProvider.currentInputFill,
-                  onSurface: themeProvider.currentTextColor,
-                ),
-            timePickerTheme: TimePickerThemeData(
-              backgroundColor: themeProvider.currentInputFill,
-              dialHandColor: themeProvider.themeColor,
-              dayPeriodColor: themeProvider.themeColor,
-              dayPeriodTextColor: themeProvider.currentTextColor,
-            ),
-            dialogTheme: DialogTheme(
-              backgroundColor: themeProvider.currentInputFill,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: themeProvider.themeColor,
-              ),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
-  }
-
-  // For Image Picker
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-    if (image != null) {
-      setState(() {
-        _selectedImage = File(image.path);
-      });
-    }
-  }
-
   Future<void> _saveTask() async {
     if (!mounted) return;
     final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -336,11 +230,10 @@ class _AddTaskpageState extends State<AddTaskpage> {
     };
 
     final int recurrenceInt = recurrenceMap[_selectedRecurrence ?? 'Once'] ?? 0;
-    final double? dueTimestamp = dateTimeToTimestamp(_selectedDate, _selectedTime);
     final int priorityInt = priorityToInt(_selectedPriority);
 
-    // If the date/time is invalid, show a snackbar
-    if (dueTimestamp == null) {
+    // If the date/time is invalid (shouldn't happen with current checks, but good practice)
+    if (_selectedDate == null || _selectedTime == null) {
       scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Invalid date/time selected.')));
       return;
     }
@@ -348,21 +241,24 @@ class _AddTaskpageState extends State<AddTaskpage> {
     setState(() => _isSaving = true); // Set saving state to true, shows a loading indicator
 
     try {
-      final response = await _apiService.post('/add_task', {
-        'task_name': _titleController.text,
-        'task_description': _descriptionController.text,
-        'task_due': dueTimestamp,
-        'assigner_id': _userId,
-        'assign_id': _selectedMemberId!,
-        'group_id': _selectedGroupId!,
-        'password': _password,
-        'priority': priorityInt,
-        'task_est_day': estDays,
-        'task_est_hour': estHours,
-        'task_est_min': estMins,
-        'recursive': recurrenceInt,
-        'image_path': '' // TODO: Implement image upload not via path, but via file
-      });
+      final response = await _apiService.addTask(
+        _titleController.text,                           // taskName
+        _descriptionController.text,                   // taskDescription
+        _selectedDate!.year,                           // dueYear
+        _selectedDate!.month,                          // dueMonth
+        _selectedDate!.day,                            // dueDate
+        _selectedTime!.hour,                           // dueHour
+        _selectedTime!.minute,                         // dueMin
+        estDays,                                       // estDay
+        estHours,                                      // estHour
+        estMins,                                       // estMin
+        _userId,                                       // assignerId
+        _selectedMemberId!,                            // assignId
+        _selectedGroupId!,                             // groupId
+        recurrenceInt,                                 // recursive
+        priorityInt,                                   // priority
+        _password,                                     // password
+      );
 
       if (!mounted) return;
 
@@ -401,6 +297,114 @@ class _AddTaskpageState extends State<AddTaskpage> {
     }
   }
 
+
+  // ------- Date/Time/Image Picker Methods ------- //
+
+  Future<void> _selectDate(BuildContext context) async {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+      lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: themeProvider.isDarkMode
+              ? ColorScheme.dark(
+                  primary: themeProvider.themeColor,
+                  onPrimary: themeProvider.currentTextColor,
+                  surface: themeProvider.currentInputFill,
+                  onSurface: themeProvider.currentTextColor,
+                )
+              : ColorScheme.light(
+                  primary: themeProvider.themeColor,
+                  onPrimary: themeProvider.currentTextColor,
+                  surface: themeProvider.currentInputFill,
+                  onSurface: themeProvider.currentTextColor,
+                ),
+            dialogTheme: DialogTheme(
+              backgroundColor: themeProvider.currentInputFill,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: themeProvider.themeColor,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: themeProvider.isDarkMode
+              ? ColorScheme.dark(
+                  primary: themeProvider.themeColor,
+                  onPrimary: themeProvider.currentTextColor,
+                  surface: themeProvider.currentInputFill,
+                  onSurface: themeProvider.currentTextColor,
+                )
+              : ColorScheme.light(
+                  primary: themeProvider.themeColor,
+                  onPrimary: themeProvider.currentTextColor,
+                  surface: themeProvider.currentInputFill,
+                  onSurface: themeProvider.currentTextColor,
+                ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: themeProvider.currentInputFill,
+              dialHandColor: themeProvider.themeColor,
+              dayPeriodColor: themeProvider.themeColor,
+              dayPeriodTextColor: themeProvider.currentTextColor,
+            ),
+            dialogTheme: DialogTheme(
+              backgroundColor: themeProvider.currentInputFill,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: themeProvider.themeColor,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        _selectedImage = File(image.path);
+      });
+    }
+  }
+
+  // ------- Main Build Method ------- //
+
   @override
   Widget build(BuildContext context) {
     // Theme and general input styling setup
@@ -433,7 +437,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Task Details Section - Title and Description
+            // ------------ Task Details Section ------------  //
             Text(
               'Task Details',
               style: TextStyle(
@@ -455,7 +459,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
             ),
             const SizedBox(height: 12),
 
-            // Assignment Section - Group and Member Selection
+            // ------------ Assignment Section ------------  //
             Text(
               'Assign To',
               style: TextStyle(
@@ -527,7 +531,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
             ),
             const SizedBox(height: 12),
 
-            // Priority Section - Task Priority Selection
+            // ------------ Priority Section ------------  //
             Text(
               'Priority',
               style: TextStyle(
@@ -558,7 +562,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
              ),
             const SizedBox(height: 12),
 
-            // Due Date & Time Section - Calendar and Time Pickers
+            // ------------ Due Date & Time Section ------------  //
             Text(
               'Due Date & Time',
               style: TextStyle(
@@ -603,7 +607,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
             ),
             const SizedBox(height: 12),
 
-            // Estimated Duration Section - Days, Hours, Minutes inputs
+            // ------------ Estimated Duration Section ------------  //
             Text(
               'Estimated Duration',
               style: TextStyle(
@@ -642,7 +646,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
             ),
             const SizedBox(height: 12),
 
-            // Recurrence Section - Task repetition pattern
+            // ------------ Recurrence Section ------------  //
             Text(
               'Recurrence',
               style: TextStyle(
@@ -674,7 +678,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
             ),
             const SizedBox(height: 16),
 
-            // Action Buttons - Add Photo and Save Task
+            // ------------ Action Buttons ------------  //
             Row(
               children: [
                 ElevatedButton.icon(

@@ -5,7 +5,7 @@ import 'package:roomiebuddy/providers/theme_provider.dart';
 
 import 'pages/home_page.dart';
 import 'pages/calendar_page.dart';
-import 'pages/add_taskpage.dart';
+import 'pages/add_task_page.dart';
 import 'pages/group_page.dart';
 import 'pages/settings_page.dart';
 
@@ -18,11 +18,11 @@ class Navscreen extends StatefulWidget {
 
 class _NavscreenState extends State<Navscreen> {
   final pages = [
-    HomePage(),
-    CalendarPage(),
-    AddTaskpage(),
-    GroupPage(),
-    SettingsPage(),
+    const HomePage(),
+    const CalendarPage(),
+    const AddTaskpage(),
+    const GroupPage(),
+    const SettingsPage(),
   ];
   int selectedIndex = 0;
   @override

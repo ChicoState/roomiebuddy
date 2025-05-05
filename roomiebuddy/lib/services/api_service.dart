@@ -3,12 +3,12 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // BASE URL
-  static const String baseUrl = 'http://10.0.2.2:5000';
+  static const String baseUrl = 'https://msdocs-python-webapp-quickstart-rmb.azurewebsites.net';
   
   // HTTP client
   final http.Client _client = http.Client();
 
-  // Singleton pattern implC
+  // Singleton pattern impl
   static final ApiService _instance = ApiService._internal();
   
   factory ApiService() {
@@ -65,12 +65,21 @@ class ApiService {
     });
   }
 
-  // TASK METHODS
+  //  ------------ TASK METHODS ------------  //
   
   // Get user tasks
   Future<Map<String, dynamic>> getUserTasks(String userId, String password) async {
     return await post('/get_user_task', {
       'user_id': userId,
+      'password': password,
+    });
+  }
+
+  // Get group tasks
+  Future<Map<String, dynamic>> getGroupTasks(String userId, String groupId, String password) async {
+    return await post('/get_group_task', {
+      'user_id': userId,
+      'group_id': groupId,
       'password': password,
     });
   }
@@ -114,7 +123,20 @@ class ApiService {
     });
   }
 
-  // GROUP METHODS
+  // Delete a task
+  Future<Map<String, dynamic>> deleteTask(
+    String userId,
+    String password,
+    String taskId,
+  ) async {
+    return await post('/delete_task', {
+      'user_id': userId,
+      'password': password,
+      'task_id': taskId,
+    });
+  }
+
+  //  ------------ GROUP METHODS ------------  //
 
   // Get all groups for a user
   Future<Map<String, dynamic>> getGroupList(String userId, String password) async {
@@ -170,17 +192,6 @@ class ApiService {
       return _handleError(e);
     }
   }
-  // **** END NEW METHOD ****
-
-  // Helper to convert priority int to string
-  String priorityToString(int priority) {
-    switch (priority) {
-      case 0: return 'Low';
-      case 1: return 'Medium';
-      case 2: return 'High';
-      default: return 'Unknown';
-    }
-  }
 
   // Create a new group
   Future<Map<String, dynamic>> createGroup(
@@ -223,6 +234,8 @@ class ApiService {
     });
   }
 
+  //  ------------ INVITE METHODS ------------  //
+
   // Invite a user to a group
   Future<Map<String, dynamic>> inviteToGroup(
     String inviterId, 
@@ -260,6 +273,8 @@ class ApiService {
       'password': password,
     });
   }
+
+  //  ------------ HANDLE RESPONSE METHODS ------------  //
 
   // Handle HTTP response
   Map<String, dynamic> _handleResponse(http.Response response) {

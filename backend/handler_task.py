@@ -86,6 +86,22 @@ class TaskHandle:
             user_id=user_id, password=password
         )
 
+    @handle_backend_exceptions
+    def get_group_task_request(self) -> dict[str, dict[str, Any]]:
+        """Gets tasks for a specific group."""
+        request_data: dict[str, Any] = extract_request_data(
+            request=self.user_request,
+            required_fields=["user_id", "group_id", "password"],
+        )
+        user_id: str = request_data["user_id"]
+        group_id: str = request_data["group_id"]
+        password: str = request_data["password"]
+        return TaskController().get_group_task_control(
+            user_id=user_id,
+            group_id=group_id,
+            password=password
+        )
+
 
 if __name__ == "__main__":
     print("This is a module and should not be run directly.")
