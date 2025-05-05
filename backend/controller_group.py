@@ -223,7 +223,6 @@ class GroupController:
             raise BackendError("Backend Error: Group does not exist", "306")
         if not Validator().check_user_in_group(user_id, group_id):
             raise BackendError("Backend Error: User not in group", "308")
-            
         with db_operation() as data_cursor:
             # Get all users in the group
             data_cursor.execute(
@@ -235,10 +234,10 @@ class GroupController:
                 (group_id,),
             )
             user_ids = [row[0] for row in data_cursor.fetchall()]
-            
+
             if not user_ids:
                 return []
-                
+
             # Get user information for each member
             placeholders = ",".join("?" for _ in user_ids)
             data_cursor.execute(
@@ -250,13 +249,13 @@ class GroupController:
                 user_ids,
             )
             members_data = data_cursor.fetchall()
-            
+
             # Create a list of member dictionaries
             members = [
                 {"user_id": member_id, "username": member_name, "email": member_email}
                 for member_id, member_name, member_email in members_data
             ]
-            
+
             return members
 
 

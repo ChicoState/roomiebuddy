@@ -60,20 +60,19 @@ class InviteHandle:
         invite_id: str = request_data["invite_id"]
         password: str = request_data["password"]
         status: str = request_data["status"]
-        
+
         # Get group_id from invite_id
         group_id = self._get_group_id_from_invite(invite_id, user_id)
-        
+
         # Convert status to boolean accept
         accept = status.lower() == "accepted"
-        
         return InviteController().respond_invite_control(
             user_id=user_id,
             group_id=group_id,
             password=password,
             accept=accept,
         )
-        
+
     def _get_group_id_from_invite(self, invite_id: str, user_id: str) -> str:
         """Get group_id from invite_id."""
         with db_operation() as data_cursor:

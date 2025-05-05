@@ -1,6 +1,9 @@
 # coding: utf-8
 """This module handles the functions related to user for database."""
 
+from os import remove
+from os.path import exists
+
 from typing import Any
 from uuid import uuid4
 
@@ -27,8 +30,8 @@ class UserController:
             raise BackendError("Backend Error: Email already exists", "302")
         with db_operation() as data_cursor:
             data_cursor.execute(
-                "INSERT INTO user VALUES (?, ?, ?, ?);",
-                (user_id, username, email, password),
+                "INSERT INTO user VALUES (?, ?, ?, ?, ?);",
+                (user_id, username, email, password, ""),
             )
         return user_id
 
@@ -46,10 +49,7 @@ class UserController:
                 (email,),
             )
             user_data = data_cursor.fetchone()
-        if user_data:
-            return {"user_id": user_data[0], "username": user_data[1]}
-        else:
-            raise BackendError("Backend Error: User not found after successful check", "500")
+        return {"user_id": user_data[0], "username": user_data[1]}
 
     def edit_user_control(
         self,
@@ -68,7 +68,10 @@ class UserController:
             raise BackendError("Backend Error: Password is incorrect", "305")
         with db_operation() as data_cursor:
             data_cursor.execute(
-                "UPDATE user SET username = ?, email = ?, password = ? WHERE uuid = ?;",
+                (
+                    "UPDATE user SET username = ?, email = ?, "
+                    "password = ? WHERE uuid = ?;"
+                ),
                 (
                     request_data["username"],
                     request_data["email"],
@@ -88,6 +91,21 @@ class UserController:
         if not Validator().check_password(user_id=user_id, password=password):
             raise BackendError("Backend Error: Password is incorrect", "305")
         with db_operation() as data_cursor:
+            data_cursor.execute(
+                "SELECT image_path FROM user WHERE uuid = ?;",
+                (user_id,),
+            )
+            result = data_cursor.fetchone()
+            if result and result[0]:
+                image_path = result[0]
+                if exists(image_path):
+                    try:
+                        remove(image_path)
+                    except Exception as err:
+                        raise BackendError(
+                            "Backend Error: Unable to delete image.", "203"
+                        ) from err
+
             data_cursor.execute(
                 "DELETE FROM user WHERE uuid = ?;",
                 (user_id,),

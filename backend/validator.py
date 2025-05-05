@@ -1,8 +1,9 @@
 # coding: utf-8
 """This function checks if the given data is valid."""
 
-from utils import db_operation
+from os import makedirs
 
+from utils import db_operation
 from error import BackendError
 
 CREATE_TASK_TABLE: str = (
@@ -18,7 +19,8 @@ CREATE_TASK_TABLE: str = (
 CREATE_USER_TABLE: str = (
     "CREATE TABLE IF NOT EXISTS user"
     "(uuid TEXT PRIMARY KEY, username TEXT NOT NULL, "
-    "email TEXT NOT NULL, password TEXT NOT NULL);"
+    "email TEXT NOT NULL, password TEXT NOT NULL, "
+    "image_path TEXT);"
 )
 CREATE_GROUP_TABLE: str = (
     "CREATE TABLE IF NOT EXISTS task_group"
@@ -36,6 +38,8 @@ CREATE_GROUP_INVITES_TABLE: str = (
     "inviter_id TEXT NOT NULL, invitee_id TEXT NOT NULL, "
     "day_created REAL NOT NULL);"
 )
+UPLOAD_FOLDER: str = "data/images"
+ALLOWED_EXTENSIONS: set[str] = {"png", "jpg", "jpeg"}
 
 
 class Validator:
@@ -48,6 +52,8 @@ class Validator:
     def initializer(self) -> None:
         """This function initializes to create the database."""
 
+        makedirs(UPLOAD_FOLDER, exist_ok=True)
+
         with db_operation() as data_cursor:
             data_cursor.execute(CREATE_TASK_TABLE)
             data_cursor.execute(CREATE_USER_TABLE)
@@ -57,7 +63,7 @@ class Validator:
 
             if (
                 len(data_cursor.execute("SELECT * FROM task;").description) != 14
-                or len(data_cursor.execute("SELECT * FROM user;").description) != 4
+                or len(data_cursor.execute("SELECT * FROM user;").description) != 5
                 or len(data_cursor.execute("SELECT * FROM task_group;").description)
                 != 4
                 or len(data_cursor.execute("SELECT * FROM group_user;").description)

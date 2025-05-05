@@ -31,6 +31,8 @@ Backend error codes
     The backend has not been configured correctly. Please check the backend configuration.
 202: "Database connection is not established"
     This happens because the function failed to conenct with the database.
+203: Failed to delete file
+    The file was not deleted. Please check the file id and try again.
 
 ----------------
 sqlite3 error codes
@@ -59,12 +61,10 @@ sqlite3 error codes
 310: "User is not in the group"
     The user is not in the group. Please check the group id and try again.
 311: "Invitee already has an invite"
-<<<<<<< Updated upstream
-    The invitee already has an invite. Please check the group id and try again.
-=======
     The invitee already has an invite. Please check the group id and try again.
 312: "invalid file type"
     The file type is not supported. Please check the file type and try again.
 313: "File not found"
     The file was not found. Please check the file id and try again.
->>>>>>> Stashed changes
+314: "File not attached"
+    The file was not attached. Please check the file id and try again.
