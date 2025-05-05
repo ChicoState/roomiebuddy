@@ -97,20 +97,10 @@ class TaskHandle:
         group_id: str = request_data["group_id"]
         password: str = request_data["password"]
         return TaskController().get_group_task_control(
-            user_id=user_id, 
-            group_id=group_id, 
+            user_id=user_id,
+            group_id=group_id,
             password=password
         )
-
-    @handle_backend_exceptions
-    def get_image_request(self) -> str:
-        """Gets the image."""
-        request_data: dict[str, Any] = extract_request_data(
-            request=self.user_request,
-            required_fields=["image_path"],
-        )
-        image_path: str = request_data["image_path"]
-        return TaskController().get_image_control(image_path=image_path)
 
 
 if __name__ == "__main__":

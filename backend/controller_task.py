@@ -1,6 +1,9 @@
 # coding: utf-8
 """This module controls the task data between the sqlite database."""
 
+from os import remove
+from os.path import exists
+
 from datetime import datetime
 from typing import Any
 from uuid import uuid4
@@ -37,7 +40,6 @@ class TaskController:
         task_id: str = str(uuid4())
         while Validator().check_duplicate_id(data_table="task", given_id=task_id):
             task_id = str(uuid4())
-        image_path = "TODO CHANGE HERE"
         task_due: float = datetime(
             int(request_data.get("task_due_year", "2000")),
             int(request_data.get("task_due_month", "1")),
@@ -63,7 +65,7 @@ class TaskController:
                     0,  # completed = 0
                     int(request_data.get("priority", "0")),
                     int(request_data.get("recursive", "0")),
-                    image_path,
+                    "",  # image_path = ""
                 ),
             )
         return task_id
@@ -83,9 +85,10 @@ class TaskController:
             request_data["group_id"]
         ):
             raise BackendError("Backend Error: Group does not exist", "306")
-        if not Validator().check_password(user_id=assigner_id, password=password):
+        if not Validator().check_password(
+            user_id=request_data["assigner_id"], password=request_data["password"]
+        ):
             raise BackendError("Backend Error: Password is incorrect", "305")
-        image_path = "TODO CHANGE HERE"
         task_due: float = datetime(
             int(request_data.get("task_due_year", "2000")),
             int(request_data.get("task_due_month", "1")),
@@ -112,7 +115,6 @@ class TaskController:
                     request_data["group_id"],
                     int(request_data.get("recursive", "0")),
                     int(request_data.get("priority", "0")),
-                    image_path,
                     int(request_data.get("completed", "0")),
                     request_data["task_id"],
                 ),
@@ -131,6 +133,22 @@ class TaskController:
         if not Validator().check_password(user_id=user_id, password=password):
             raise BackendError("Backend Error: Password is incorrect", "305")
         with db_operation() as data_cursor:
+
+            data_cursor.execute(
+                "SELECT image_path FROM task WHERE uuid = ?;",
+                (task_id,),
+            )
+            result = data_cursor.fetchone()
+            if result and result[0]:
+                image_path = result[0]
+                if exists(image_path):
+                    try:
+                        remove(image_path)
+                    except Exception as err:
+                        raise BackendError(
+                            "Backend Error: Unable to delete image.", "203"
+                        ) from err
+
             data_cursor.execute("DELETE FROM task WHERE uuid = ?;", (task_id,))
 
     def get_user_task_control(self, user_id: str, password: str) -> dict[str, dict]:
@@ -147,11 +165,13 @@ class TaskController:
             # Get assigner username
             assigner_username = "Unknown"
             with db_operation() as username_cursor:
-                username_cursor.execute("SELECT username FROM user WHERE uuid = ?;", (task[7],))
+                username_cursor.execute(
+                    "SELECT username FROM user WHERE uuid = ?;", (task[7],)
+                )
                 username_result = username_cursor.fetchone()
                 if username_result:
                     assigner_username = username_result[0]
-            
+
             # Get assignee username
             assignee_username = "Unknown"
             with db_operation() as username_cursor:
@@ -159,7 +179,7 @@ class TaskController:
                 username_result = username_cursor.fetchone()
                 if username_result:
                     assignee_username = username_result[0]
-                    
+
             new_task_list[task[0]] = {
                 "name": task[1],
                 "description": task[2],
@@ -202,11 +222,13 @@ class TaskController:
             # Get assigner username
             assigner_username = "Unknown"
             with db_operation() as username_cursor:
-                username_cursor.execute("SELECT username FROM user WHERE uuid = ?;", (task[7],))
+                username_cursor.execute(
+                    "SELECT username FROM user WHERE uuid = ?;", (task[7],)
+                )
                 username_result = username_cursor.fetchone()
                 if username_result:
                     assigner_username = username_result[0]
-                    
+
             # Get assignee username
             assignee_username = "Unknown"
             with db_operation() as username_cursor:
@@ -214,7 +236,7 @@ class TaskController:
                 username_result = username_cursor.fetchone()
                 if username_result:
                     assignee_username = username_result[0]
-                    
+
             new_task_list[task[0]] = {
                 "name": task[1],
                 "description": task[2],
@@ -265,11 +287,13 @@ class TaskController:
             # Get assigner username
             assigner_username = "Unknown"
             with db_operation() as username_cursor:
-                username_cursor.execute("SELECT username FROM user WHERE uuid = ?;", (task[7],))
+                username_cursor.execute(
+                    "SELECT username FROM user WHERE uuid = ?;", (task[7],)
+                )
                 username_result = username_cursor.fetchone()
                 if username_result:
                     assigner_username = username_result[0]
-                    
+
             new_task_list[task[0]] = {
                 "name": task[1],
                 "description": task[2],
@@ -310,12 +334,6 @@ class TaskController:
                     task_id,
                 ),
             )
-
-    def get_image_control(self, image_path: str) -> str:
-        """This will get the image."""
-        if not exists(image_path):
-            raise BackendError("Backend Error: Image does not exist", "313")
-        return image_path
 
 
 if __name__ == "__main__":
