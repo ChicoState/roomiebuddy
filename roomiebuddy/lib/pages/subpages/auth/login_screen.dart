@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:provider/provider.dart';
-import 'package:roomiebuddy/NavScreen.dart';
+import 'package:roomiebuddy/nav_screen.dart';
 import 'package:roomiebuddy/providers/theme_provider.dart';
-import 'package:roomiebuddy/pages/signup_screen.dart';
+import 'package:roomiebuddy/pages/subpages/auth/signup_screen.dart';
 import 'package:roomiebuddy/services/api_service.dart';
 import 'package:roomiebuddy/services/auth_storage.dart';
 

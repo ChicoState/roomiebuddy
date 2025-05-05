@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:roomiebuddy/providers/theme_provider.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:roomiebuddy/pages/login_screen.dart';
+import 'package:roomiebuddy/pages/subpages/auth/login_screen.dart';
 import 'package:roomiebuddy/services/auth_storage.dart';
 import 'package:flutter/services.dart';
 
@@ -25,6 +25,8 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
     _loadUserData();
   }
+
+  // ------- Backend Communication Methods ------- //
 
   Future<void> _loadUserData() async {
     setState(() {
@@ -61,6 +63,8 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     }
   }
+
+  // ------- Color Picker Method ------- //
 
   void _openColorPicker(BuildContext context, ThemeProvider themeProvider) {
     Color pickerColor = themeProvider.themeColor;
@@ -112,6 +116,8 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
   }
+
+  // ------- Main Build Method ------- //
 
   @override
   Widget build(BuildContext context) {
@@ -166,7 +172,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               margin: const EdgeInsets.only(bottom: 16.0),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                padding: const EdgeInsets.fromLTRB(16.0, 4.0, 0.0, 4.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

@@ -44,6 +44,8 @@ class _GroupPageState extends State<GroupPage> {
     super.dispose();
   }
 
+  // ------- Backend Communication Methods ------- //
+
   Future<void> _loadUserData() async {
     setState(() {
       _isLoading = true;
@@ -273,6 +275,8 @@ class _GroupPageState extends State<GroupPage> {
       // Silently handle error
     }
   }
+
+  // ------- Main Build Method ------- //
 
   @override
   Widget build(BuildContext context) {
