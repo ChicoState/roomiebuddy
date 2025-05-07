@@ -61,7 +61,7 @@ class _CalendarPageState extends State<CalendarPage> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -90,7 +90,6 @@ class _CalendarPageState extends State<CalendarPage> {
                  ),
               ],
             ),
-            const SizedBox(height: 10),
             _buildEventsList(themeProvider),
             const SizedBox(height: 10),
           ],

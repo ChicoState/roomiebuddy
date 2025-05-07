@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../common/widget/appbar/appbar.dart';
 import '../providers/theme_provider.dart';
 import 'package:roomiebuddy/services/auth_storage.dart';
@@ -23,9 +25,12 @@ class HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> _roommateGroups = [];
   int _currentGroupIndex = 0;
   bool _showOnlyMyTasks = true;
+  bool _isUploadingImage = false;
+  String? _profileImagePath;
 
   final AuthStorage _authStorage = AuthStorage();
   final ApiService _apiService = ApiService();
+  final ImagePicker _imagePicker = ImagePicker();
 
   String? _userId;
   String? _password;
@@ -40,10 +45,10 @@ class HomePageState extends State<HomePage> {
   // --- Backend Communication Functions --- //
 
   Future<void> _loadUserDataAndGroups() async {
-
     _userId = await _authStorage.getUserId();
     _password = await _authStorage.getPassword();
     _userName = await _authStorage.getUsername() ?? "User";
+    _profileImagePath = await _authStorage.getProfileImagePath();
 
     if (_userId != null && _password != null) {
       try {
@@ -271,12 +276,129 @@ class HomePageState extends State<HomePage> {
     return "Good Evening";
   }
 
+  // --- Profile Image Functions --- //
+
+  Future<void> _showImageSourceOptions() async {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: themeProvider.currentCardBackground,
+      builder: (BuildContext context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              leading: Icon(Icons.photo_camera, color: themeProvider.currentTextColor),
+              title: Text('Take a photo', style: TextStyle(color: themeProvider.currentTextColor)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library, color: themeProvider.currentTextColor),
+              title: Text('Choose from gallery', style: TextStyle(color: themeProvider.currentTextColor)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    if (_userId == null || _password == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You must be logged in to upload an image')),
+        );
+      }
+      return;
+    }
+
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: source, 
+        imageQuality: 70, // Reduce image size for faster upload
+      );
+      
+      if (pickedFile != null) {
+        setState(() => _isUploadingImage = true);
+        
+        final File imageFile = File(pickedFile.path);
+        final response = await _apiService.uploadUserImage(
+          _userId!,
+          _password!,
+          imageFile,
+        );
+        
+        if (!mounted) return;
+        
+        if (response['success']) {
+          // The backend returns image_url on success
+          String? imagePath = response['data']?['image_url'];
+          
+          // If not found, try other possible field names
+          imagePath ??= response['data']?['file_path'];
+          
+          if (imagePath != null && imagePath.isNotEmpty) {
+            setState(() {
+              _profileImagePath = imagePath;
+            });
+            
+            // Save the profile image path
+            await _authStorage.saveProfileImagePath(imagePath);
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Profile image updated successfully')),
+              );
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Profile image path is empty')),
+              );
+            }
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to update profile image: ${response['message']}')),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading image: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
+  }
+
+  String _getImageUrl(String imagePath) {
+    // The backend stores filenames like "data/images/file.jpg"
+    // Extract just the filename
+    final filename = imagePath.split('/').last;
+    
+    // Construct the full URL to the image
+    return '${ApiService.baseUrl}/data/images/$filename';
+  }
+
   // --- Build Widgets --- //
 
   @override
   Widget build(BuildContext context) {
-    String userName = _userName;
-    // String? profileImagePath;
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
@@ -285,37 +407,47 @@ class HomePageState extends State<HomePage> {
         title: Row(
           // Profile Image
           children: [
-            // COMMENTED OUT UNTIL WE GET PROFILE PIC WORKING (The warning was bothering me)
-            // if (profileImagePath != null)
-            //   Container(
-            //     width: 40,
-            //     height: 40,
-            //     decoration: BoxDecoration(
-            //       shape: BoxShape.circle,
-            //       border: Border.all(color: Colors.grey, width: 2),
-            //     ),
-            //     child: ClipOval(
-            //       child: Image.asset(
-            //         profileImagePath,
-            //         fit: BoxFit.cover,
-            //         errorBuilder: (context, error, stackTrace) => const Icon(Icons.person, size: 30, color: Colors.grey),
-            //       ),
-            //     ),
-            //   )
-            // else
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey, width: 2),
-                ),
-                child: const Icon(Icons.person, size: 30, color: Colors.grey),
-              ),
+            GestureDetector(
+              onTap: _showImageSourceOptions,
+              child: _isUploadingImage
+                ? Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey, width: 2),
+                    ),
+                    child: const Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  )
+                : Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey, width: 2),
+                    ),
+                    child: _profileImagePath != null
+                      ? ClipOval(
+                          child: Image.network(
+                            _getImageUrl(_profileImagePath!),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => 
+                              const Icon(Icons.person, size: 30, color: Colors.grey),
+                          ),
+                        )
+                      : const Icon(Icons.person, size: 30, color: Colors.grey),
+                  ),
+            ),
             const SizedBox(width: 10),
             // Greeting
             Text(
-              "${_getGreeting()}, $userName",
+              "${_getGreeting()}, $_userName",
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
           ],
@@ -334,95 +466,80 @@ class HomePageState extends State<HomePage> {
         ],
       ),
       // -------------------- Body -------------------- //
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Roommate Groups title
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0, vertical: 12.0),
-              child: Text(
-                'Groups',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: themeProvider.currentTextColor,
-                ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Roommate Groups title
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 16.0, vertical: 12.0),
+            child: Text(
+              'Groups',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: themeProvider.currentTextColor,
               ),
             ),
-            // Roommate Groups carousel
-            Container(
-              color: themeProvider.themeColor,
-              height: 180,
-              child: _roommateGroups.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No groups found.',
-                        style: TextStyle(color: themeProvider.currentSecondaryTextColor),
-                      ),
-                    )
-                  : _buildGroupCarousel(),
-            ),
-
-            // -------------------- Leaderboard Section -------------------- //
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-              child: Text(
-                'Leaderboard',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: themeProvider.currentTextColor,
+          ),
+          // Roommate Groups carousel
+          Container(
+            color: themeProvider.themeColor,
+            height: 180,
+            child: _roommateGroups.isEmpty
+                ? Center(
+                    child: Text(
+                      'No groups found.',
+                      style: TextStyle(color: themeProvider.currentSecondaryTextColor),
+                    ),
+                  )
+                : _buildGroupCarousel(),
+          ),
+          
+          // -------------------- Task Section -------------------- //
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 0.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Dynamic title
+                Text(
+                  _showOnlyMyTasks ? 'My Tasks' : 'All Tasks',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: themeProvider.currentTextColor,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 50),
-            
-            // -------------------- Task Section -------------------- //
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Dynamic title
-                  Text(
-                    _showOnlyMyTasks ? 'My Tasks' : 'All Tasks',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                // Dynamic icon
+                Tooltip(
+                  message: _showOnlyMyTasks ? 'Show all tasks' : 'Show only my tasks',
+                  child: IconButton(
+                    icon: Icon(
+                      _showOnlyMyTasks ? Icons.person : Icons.group,
                       color: themeProvider.currentTextColor,
                     ),
+                    onPressed: () {
+                      setState(() {
+                        _showOnlyMyTasks = !_showOnlyMyTasks;
+                      });
+                    },
                   ),
-                  // Dynamic icon
-                  Tooltip(
-                    message: _showOnlyMyTasks ? 'Show all tasks' : 'Show only my tasks',
-                    child: IconButton(
-                      icon: Icon(
-                        _showOnlyMyTasks ? Icons.person : Icons.group,
-                        color: themeProvider.currentTextColor,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _showOnlyMyTasks = !_showOnlyMyTasks;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            
-            // Tasks List (in task_list_widget.dart)
-            _isTaskLoading
+          ),
+          
+          // Tasks List (in task_list_widget.dart)
+          Expanded(
+            child: _isTaskLoading
                 ? const Center(child: CircularProgressIndicator())
                 : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 26.0),
                     child: _buildTaskList(),
                   ),
-            const SizedBox(height: 50),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -443,10 +560,7 @@ class HomePageState extends State<HomePage> {
 
     // --- Task List Widget --- //
     return ConstrainedBox(
-      constraints: const BoxConstraints(
-        minHeight: 300, // min height (CHANGE THIS TO MAKE DYNAMIC)
-        maxHeight: 300, // max height
-      ),
+      constraints: const BoxConstraints(), // min height (CHANGE THIS TO MAKE DYNAMIC)
       child: TaskListWidget(
         allTasks: _tasks,
         focusedGroupId: currentFocusedGroupId,
@@ -482,7 +596,7 @@ class HomePageState extends State<HomePage> {
           height: 140.0,
           enlargeCenterPage: true,
           autoPlay: false,
-          viewportFraction: 0.85,
+          viewportFraction: 0.6,
           initialPage: _currentGroupIndex,
           onPageChanged: (index, reason) {
             setState(() {

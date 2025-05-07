@@ -93,8 +93,8 @@ class _SignupScreenState extends State<SignupScreen> {
                   
                   Text(
                     (emailController.text.trim().isNotEmpty && !isValidEmail) ? 'Email is not valid' : '',
-                    style: TextStyle(
-                      color: themeProvider.errorColor,
+                    style: const TextStyle(
+                      color: Colors.red,
                     ),
                   ),
                   
@@ -140,8 +140,8 @@ class _SignupScreenState extends State<SignupScreen> {
                   
                   Text(
                     passwordsMatch ? '' : 'Passwords do not match',
-                    style: TextStyle(
-                      color: themeProvider.errorColor,
+                    style: const TextStyle(
+                      color: Colors.red,
                     ),
                   ),
                   
@@ -151,8 +151,8 @@ class _SignupScreenState extends State<SignupScreen> {
                   if (_errorMessage.isNotEmpty)
                     Text(
                       _errorMessage,
-                      style: TextStyle(
-                        color: themeProvider.errorColor,
+                      style: const TextStyle(
+                        color: Colors.red,
                       ),
                     ),
                   

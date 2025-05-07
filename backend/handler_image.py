@@ -7,6 +7,7 @@ from flask import Request
 from error import BackendError, handle_backend_exceptions
 from controller_image import ImageController
 from utils import extract_request_data
+from log import make_new_log
 
 
 class ImageHandle:
@@ -58,45 +59,85 @@ class ImageHandle:
     @handle_backend_exceptions
     def upload_user_image_request(self) -> str:
         """Uploads the user image."""
+        # Check if file is provided
         if "file" not in self.user_request.files:
             raise BackendError(
                 message="No file part in the request",
                 error_code="314",
             )
+        
+        # Get file 
         file = self.user_request.files["file"]
-        request_data: dict[str, Any] = extract_request_data(
-            request=self.user_request,
-            required_fields=[
-                "image_url",
-                "user_id",
-                "password",
-            ],
-        )
+        
+        if not self.user_request.form.get("user_id"):
+            raise BackendError(
+                message="Missing user_id field",
+                error_code="110",
+            )
+        
+        if not self.user_request.form.get("password"):
+            raise BackendError(
+                message="Missing password field",
+                error_code="110",
+            )
+        
+        user_id = self.user_request.form.get("user_id")
+        password = self.user_request.form.get("password")
+        
+        # Process the image
         return ImageController().upload_user_image_control(
-            user_id=request_data["user_id"],
-            password=request_data["password"],
+            user_id=user_id,
+            password=password,
             file=file,
         )
 
     @handle_backend_exceptions
     def upload_task_image_request(self) -> str:
         """Uploads the task image."""
+        # Check if file is provided
         if "file" not in self.user_request.files:
             raise BackendError(
                 message="No file part in the request",
                 error_code="314",
             )
+        
+        # Get file 
         file = self.user_request.files["file"]
-        request_data: dict[str, Any] = extract_request_data(
-            request=self.user_request,
-            required_fields=[
-                "image_url",
-                "user_id",
-                "password",
-                "task_id",
-                "group_id",
-            ],
-        )
+        
+        # Check required fields
+        if not self.user_request.form.get("user_id"):
+            raise BackendError(
+                message="Missing user_id field",
+                error_code="110",
+            )
+        
+        if not self.user_request.form.get("password"):
+            raise BackendError(
+                message="Missing password field",
+                error_code="110",
+            )
+        
+        if not self.user_request.form.get("task_id"):
+            raise BackendError(
+                message="Missing task_id field",
+                error_code="110",
+            )
+        
+        if not self.user_request.form.get("group_id"):
+            raise BackendError(
+                message="Missing group_id field",
+                error_code="110",
+            )
+        
+        # Create request data dictionary
+        request_data = {
+            "user_id": self.user_request.form.get("user_id"),
+            "password": self.user_request.form.get("password"),
+            "task_id": self.user_request.form.get("task_id"),
+            "group_id": self.user_request.form.get("group_id"),
+        }
+        
+        # Process the image
         return ImageController().upload_task_image_control(
             request_data=request_data,
             file=file,

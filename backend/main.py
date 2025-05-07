@@ -3,7 +3,7 @@
 
 from typing import Any
 
-from flask import Flask, request, jsonify, Response, send_file
+from flask import Flask, request, jsonify, Response, send_file, send_from_directory
 
 # from werkzeug.utils import secure_filename
 from validator import Validator
@@ -289,6 +289,11 @@ def handle_delete_task_image() -> Response:
     """Delete an image."""
     ImageHandle(request).delete_task_image_request()
     return jsonify([{"error_no": "0", "message": "success"}])
+
+
+@app.route('/data/images/<path:filename>')
+def serve_task_image(filename):
+    return send_from_directory('../data/images', filename)
 
 
 if __name__ == "__main__":

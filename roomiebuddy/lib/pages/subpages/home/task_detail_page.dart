@@ -10,6 +10,8 @@ class TaskDetailScreen extends StatelessWidget {
   @override
   // ----- Task Detail Page ----- //
   Widget build(BuildContext context) {
+    final String? photoPath = task['photo'];
+    final String imageUrl = _getImageUrl(photoPath ?? '');
     return Scaffold(
       appBar: AppBar(title: Text(task['taskName'])),
       body: Padding(
@@ -21,15 +23,13 @@ class TaskDetailScreen extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                Text("Title: ${task['taskName']}",
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 Text("Description: ${task['description']?.isNotEmpty == true ? task['description'] : 'Not specified'}"),
                 const SizedBox(height: 12),
-                Text("Priority: ${task['priority']}"),
+                Text("Priority: ${task['priority']}",),
                 const SizedBox(height: 12),
-                Text("Assigned by: ${task['assignedBy']}"),
-                Text("Assigned to: ${task['assignedTo']}"),
+                Text("Assigned by: ${task['assignedBy']}",),
+                Text("Assigned to: ${task['assignedTo']}",),
                 const SizedBox(height: 12),
                 Text("Due Date: ${task['dueDate'] ?? 'Not specified'}"),
                 Text("Time Due: ${task['dueTime'] ?? 'Not specified'}"),
@@ -39,12 +39,30 @@ class TaskDetailScreen extends StatelessWidget {
                 Text("Recurrence: ${task['recurrence'] ?? 'Not specified'}"),
               ],
             ),
+            if (imageUrl !=  ' ') ...[
+              const SizedBox(height: 30),
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    width: 250,
+                    height: 250,
+                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 80, color: Colors.grey),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 30),
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  backgroundColor: Colors.red.withAlpha(40),
+                  foregroundColor: Colors.red,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
                 onPressed: () => _showDeleteConfirmation(context),
@@ -55,6 +73,15 @@ class TaskDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getImageUrl(String imagePath) {
+    // The backend stores filenames like "data/images/file.jpg"
+    // Extract just the filename
+    final filename = imagePath.split('/').last;
+    
+    // Construct the full URL to the image
+    return '${ApiService.baseUrl}/data/images/$filename';
   }
 
   // ----- Delete Task Confirmation ----- //

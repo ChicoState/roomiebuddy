@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class ApiService {
   // BASE URL
-  static const String baseUrl = 'https://msdocs-python-webapp-quickstart-rmb.azurewebsites.net';
+  static const String baseUrl = 'http://10.0.2.2:5000'; // 'https://msdocs-python-webapp-quickstart-rmb.azurewebsites.net';
   
   // HTTP client
   final http.Client _client = http.Client();
@@ -66,14 +67,6 @@ class ApiService {
   }
 
   //  ------------ TASK METHODS ------------  //
-  
-  // Get user tasks
-  Future<Map<String, dynamic>> getUserTasks(String userId, String password) async {
-    return await post('/get_user_task', {
-      'user_id': userId,
-      'password': password,
-    });
-  }
 
   // Get group tasks
   Future<Map<String, dynamic>> getGroupTasks(String userId, String groupId, String password) async {
@@ -221,19 +214,6 @@ class ApiService {
     });
   }
 
-  // Delete a group
-  Future<Map<String, dynamic>> deleteGroup(
-    String userId, 
-    String password, 
-    String groupId
-  ) async {
-    return await post('/delete_group', {
-      'user_id': userId,
-      'password': password,
-      'group_id': groupId,
-    });
-  }
-
   //  ------------ INVITE METHODS ------------  //
 
   // Invite a user to a group
@@ -271,6 +251,91 @@ class ApiService {
       'invite_id': inviteId,
       'status': status, // 'accepted' or 'rejected'
       'password': password,
+    });
+  }
+
+  Future<Map<String, dynamic>> uploadTaskImage(
+    String userId,
+    String password,
+    String taskId,
+    String groupId,
+    File imageFile,
+  ) async {
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/upload_task_image'),
+      );
+
+      request.fields.addAll({
+        'user_id': userId,
+        'password': password,
+        'task_id': taskId,
+        'group_id': groupId,
+        'image_url': '', // set by backend
+      });
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          imageFile.path,
+        ),
+      );
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Upload user profile image
+  Future<Map<String, dynamic>> uploadUserImage(
+    String userId,
+    String password,
+    File imageFile,
+  ) async {
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/upload_user_image'),
+      );
+
+      // Add the fields to the form data (not JSON)
+      request.fields['user_id'] = userId;
+      request.fields['password'] = password;
+
+      // Add the file
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          imageFile.path,
+        ),
+      );
+
+      // Send the request and get response
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      // Use the same response handler as other methods
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Get user profile image
+  Future<Map<String, dynamic>> getUserImage(
+    String userId,
+    String password,
+    String imageUrl,
+  ) async {
+    return await post('/get_user_image', {
+      'user_id': userId,
+      'password': password,
+      'image_url': imageUrl,
     });
   }
 

@@ -25,10 +25,6 @@ class GroupDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Group Name: ${group['group_name'] ?? 'Unnamed Group'}",
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
-            ),
             const SizedBox(height: 20),
             const Text("Members:", style: TextStyle(fontSize: 20)),
             ...memberNames.map((name) => Padding(
@@ -39,12 +35,15 @@ class GroupDetailScreen extends StatelessWidget {
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.red.withAlpha(40),
+                  foregroundColor: Colors.red,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 onPressed: () => _showLeaveGroupConfirmation(context),
-                child: const Text('Leave Group'),
+                child: const Text('Leave Group', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
