@@ -167,21 +167,12 @@ class _AddTaskpageState extends State<AddTaskpage> {
     if (!mounted) return;
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // TODO: Implement image upload
-    if (_selectedImage != null) {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(content: Text('Image selected, but backend upload is not yet implemented.')),
-      );
-    }
-
     // Ensure we have all the required fields
-    // If the user has not entered certain fields, show a snackbar telling them to enter the next missing field
-
     if (_titleController.text.isEmpty) {
       scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Please enter a task title.')));
       return;
     }
-     if (_selectedGroupId == null) {
+    if (_selectedGroupId == null) {
       scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Please select a group.')));
       return;
     }
@@ -189,7 +180,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
       scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Please select a member to assign the task to.')));
       return;
     }
-     if (_selectedPriority == null) {
+    if (_selectedPriority == null) {
       scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Please select a priority.')));
       return;
     }
@@ -238,34 +229,58 @@ class _AddTaskpageState extends State<AddTaskpage> {
       return;
     }
 
-    setState(() => _isSaving = true); // Set saving state to true, shows a loading indicator
+    setState(() => _isSaving = true);
 
     try {
+      // First create the task
       final response = await _apiService.addTask(
-        _titleController.text,                           // taskName
-        _descriptionController.text,                   // taskDescription
-        _selectedDate!.year,                           // dueYear
-        _selectedDate!.month,                          // dueMonth
-        _selectedDate!.day,                            // dueDate
-        _selectedTime!.hour,                           // dueHour
-        _selectedTime!.minute,                         // dueMin
-        estDays,                                       // estDay
-        estHours,                                      // estHour
-        estMins,                                       // estMin
-        _userId,                                       // assignerId
-        _selectedMemberId!,                            // assignId
-        _selectedGroupId!,                             // groupId
-        recurrenceInt,                                 // recursive
-        priorityInt,                                   // priority
-        _password,                                     // password
+        _titleController.text,
+        _descriptionController.text,
+        _selectedDate!.year,
+        _selectedDate!.month,
+        _selectedDate!.day,
+        _selectedTime!.hour,
+        _selectedTime!.minute,
+        estDays,
+        estHours,
+        estMins,
+        _userId,
+        _selectedMemberId!,
+        _selectedGroupId!,
+        recurrenceInt,
+        priorityInt,
+        _password,
       );
 
       if (!mounted) return;
 
       if (response['success']) {
+        // If we have an image and task was created successfully, upload the image
+        if (_selectedImage != null) {
+          final taskId = response['data']?['task_id'];
+          if (taskId != null) {
+            final imageResponse = await _apiService.uploadTaskImage(
+              _userId,
+              _password,
+              taskId,
+              _selectedGroupId!,
+              _selectedImage!,
+            );
+
+            if (!mounted) return;
+
+            if (!imageResponse['success']) {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(content: Text('Task created but image upload failed: ${imageResponse['message']}')),
+              );
+            }
+          }
+        }
+
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('Task added successfully!'), duration: Duration(seconds: 2)),
         );
+
         // Clear all the fields if save was successful
         setState(() {
           _titleController.clear();
@@ -293,7 +308,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
         SnackBar(content: Text('Error adding task: $e')),
       );
     } finally {
-       setState(() => _isSaving = false);
+      setState(() => _isSaving = false);
     }
   }
 
@@ -676,7 +691,7 @@ class _AddTaskpageState extends State<AddTaskpage> {
                 });
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
 
             // ------------ Action Buttons ------------  //
             Row(

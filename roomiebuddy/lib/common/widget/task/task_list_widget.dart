@@ -146,20 +146,20 @@ class TaskListWidget extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: task['priority'] == 'High' 
-                        ? themeProvider.errorColor.withAlpha(40)
+                        ? Colors.red.withAlpha(40)
                         : task['priority'] == 'Medium'
-                            ? themeProvider.warningColor.withAlpha(40)
-                            : themeProvider.successColor.withAlpha(40),
+                            ? Colors.orange.withAlpha(40)
+                            : Colors.green.withAlpha(40),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     task['priority'],
                     style: TextStyle(
                       color: task['priority'] == 'High'
-                          ? themeProvider.errorColor
+                          ? Colors.red
                           : task['priority'] == 'Medium'
-                              ? themeProvider.warningColor
-                              : themeProvider.successColor,
+                              ? Colors.orange
+                              : Colors.green,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),

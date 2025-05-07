@@ -206,8 +206,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   Text(
                     (emailController.text.trim().isNotEmpty && !isValidEmail) ? 'Email is not valid' : '',
-                    style: TextStyle(
-                      color: themeProvider.errorColor,
+                    style: const TextStyle(
+                      color: Colors.red,
                     ),
                   ),
             
@@ -233,8 +233,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   if (_errorMessage.isNotEmpty)
                     Text(
                       _errorMessage,
-                      style: TextStyle(
-                        color: themeProvider.errorColor,
+                      style: const TextStyle(
+                        color: Colors.red,
                       ),
                     ),
 

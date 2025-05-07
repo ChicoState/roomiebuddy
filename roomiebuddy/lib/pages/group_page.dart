@@ -168,6 +168,23 @@ class _GroupPageState extends State<GroupPage> {
   }
 
   Future<void> _inviteUser() async {
+    if (_isLoading || _isSubmitting || _userGroups.isEmpty) {
+      String snackBarMessage;
+      if (_isLoading) {
+        snackBarMessage = "Still loading, please wait.";
+      } else if (_isSubmitting) {
+        snackBarMessage = "Action already in progress.";
+      } else if (_userGroups.isEmpty) {
+        snackBarMessage = "Please create or join a group to invite users.";
+      } else {
+        snackBarMessage = "Cannot send invite at this time."; // Fallback
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(snackBarMessage)),
+      );
+      return;
+    }
+
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     
     // Ensure user ID and group are entered
@@ -282,18 +299,25 @@ class _GroupPageState extends State<GroupPage> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+    if (!_isLoading && _userId.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Group Management',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: themeProvider.currentTextColor,
+            ),
+          ),
+        ),
+        body: Center(child: Text(_errorMessage.isNotEmpty ? _errorMessage : "Failed to load user data.")),
       );
     }
 
-    if (_errorMessage.isNotEmpty) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Group Management')),
-        body: Center(child: Text(_errorMessage)),
-      );
-    }
+    final bool canInteractWithInviteSection = !_isLoading && _userGroups.isNotEmpty;
+    
+    // Determine the hint text for the group dropdown again
+    final String groupDropdownHintText = _isLoading ? "Loading..." : "Select Group";
 
     return Scaffold(
       appBar: AppBar(
@@ -375,81 +399,81 @@ class _GroupPageState extends State<GroupPage> {
               ),
               const SizedBox(height: 4),
               
-              if (_userGroups.isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          filled: true,
-                          fillColor: themeProvider.currentInputFill,
-                        ),
-                        dropdownColor: themeProvider.currentInputFill,
-                        borderRadius: BorderRadius.circular(8),
-                        value: _selectedGroupId,
-                        hint: const Text('Select Group'),
-                        items: _userGroups.map((group) => 
-                          DropdownMenuItem<String>(
-                            value: group['group_id'],
-                            child: Text(group['name'], overflow: TextOverflow.ellipsis),
-                          )
-                        ).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedGroupId = value;
-                          });
-                        },
+              // ----- Invite Roommate Section ----- //
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        filled: true,
+                        fillColor: themeProvider.currentInputFill,
                       ),
+                      dropdownColor: themeProvider.currentInputFill,
+                      borderRadius: BorderRadius.circular(8),
+                      value: _isLoading || !canInteractWithInviteSection ? null : _selectedGroupId,
+                      hint: Text(groupDropdownHintText),
+                      items: _isLoading ? [] : _userGroups.map((group) => 
+                        DropdownMenuItem<String>(
+                          value: group['group_id'],
+                          child: Text(group['name'], overflow: TextOverflow.ellipsis),
+                        )
+                      ).toList(),
+                      onChanged: _isLoading || !canInteractWithInviteSection ? null : (value) {
+                        setState(() {
+                          _selectedGroupId = value;
+                        });
+                      },
                     ),
-                    
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _userIdController,
-                            decoration: InputDecoration(
-                              hintText: 'Enter user ID',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  ),
+                  
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _userIdController,
+                          decoration: InputDecoration(
+                            hintText: 'Enter user ID',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            filled: true,
+                            fillColor: themeProvider.currentInputFill, 
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 80,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: themeProvider.themeColor,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            ),
-                            onPressed: _isSubmitting ? null : _inviteUser,
-                            child: _isSubmitting 
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: themeProvider.currentTextColor,
-                                  ),
-                                )
-                              : Text(
-                                  'Invite',
-                                  style: TextStyle(color: themeProvider.currentTextColor),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 80,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: themeProvider.themeColor,
+                            foregroundColor: themeProvider.currentTextColor,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          ),
+                          onPressed: _inviteUser,
+                          child: _isSubmitting
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: themeProvider.currentTextColor,
                                 ),
-                          ),
+                              )
+                            : const Text('Invite'),
                         ),
-                      ],
-                    ),
-                  ],
-                )
-              else
-                const Text('You must be in a group to invite a roommate.'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
               
               const SizedBox(height: 16),
 
@@ -465,96 +489,106 @@ class _GroupPageState extends State<GroupPage> {
               const SizedBox(height: 4),
 
               Container(
-                height: 420,
+                height: 442,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: themeProvider.currentInputFill,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: _pendingInvites.isNotEmpty
-                  ? ListView.builder(
-                      itemCount: _pendingInvites.length,
-                      itemBuilder: (context, index) {
-                        final invite = _pendingInvites[index];
-                        final isLoadingInvite = _loadingInvites[invite['invite_id']] == true;
-                        
-                        return Card(
-                          color: themeProvider.currentBackground,
-                          margin: const EdgeInsets.only(bottom: 12),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                            // Group Name
-                            title: Text(
-                              invite['group_name'],
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w500,
-                                color: themeProvider.currentTextColor,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            // Inviter Name
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 4.0),
-                              child: Text(
-                                'Invited by ${invite['inviter_name']}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: themeProvider.currentSecondaryTextColor,
-                                ),
-                              ),
-                            ),
-                            trailing: isLoadingInvite
-                              ? SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: themeProvider.themeColor,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(Icons.check_circle,
-                                          color: themeProvider.successColor,
-                                          size: 26,
-                                      ),
-                                      onPressed: () => _respondToInvite(invite['invite_id'], 'accepted'),
-                                      tooltip: 'Accept',
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    IconButton(
-                                      icon: Icon(Icons.highlight_off,
-                                          color: themeProvider.errorColor,
-                                          size: 26,
-                                      ),
-                                      onPressed: () => _respondToInvite(invite['invite_id'], 'rejected'),
-                                      tooltip: 'Decline',
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
-                                  ],
-                                ),
-                          ),
-                        );
-                      },
+                child: _isLoading // Check if initial data is loading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: themeProvider.themeColor,
+                      ),
                     )
-                  : Center(
-                      child: Text(
-                        'No pending invites at this time',
-                        style: TextStyle(
-                          color: themeProvider.currentSecondaryTextColor,
+                  : _pendingInvites.isNotEmpty
+                    ? ListView.builder(
+                        itemCount: _pendingInvites.length,
+                        itemBuilder: (context, index) {
+                          final invite = _pendingInvites[index];
+                          final isLoadingInvite = _loadingInvites[invite['invite_id']] == true;
+                          
+                          return Card(
+                            color: themeProvider.currentBackground,
+                            margin: const EdgeInsets.only(bottom: 12),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                              // Group Name
+                              title: Text(
+                                invite['group_name'],
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w500,
+                                  color: themeProvider.currentTextColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              // Inviter Name
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  'Invited by ${invite['inviter_name']}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: themeProvider.currentSecondaryTextColor,
+                                  ),
+                                ),
+                              ),
+                              trailing: isLoadingInvite
+                                ? SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: themeProvider.themeColor,
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.check_circle,
+                                            color: Colors.green,
+                                            size: 26,
+                                        ),
+                                        onPressed: () => _respondToInvite(invite['invite_id'], 'accepted'),
+                                        tooltip: 'Accept',
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      IconButton(
+                                        icon: const Icon(Icons.highlight_off,
+                                            color: Colors.red,
+                                            size: 26,
+                                        ),
+                                        onPressed: () => _respondToInvite(invite['invite_id'], 'rejected'),
+                                        tooltip: 'Decline',
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                    ],
+                                  ),
+                            ),
+                          );
+                        },
+                      )
+                    : Center(
+                        child: Text(
+                          // Check if a specific error message for invites exists
+                          _errorMessage.contains("Failed to load invites") 
+                              ? "Error loading invites. Please try again later." 
+                              : 'No pending invites at this time',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: themeProvider.currentSecondaryTextColor,
+                          ),
                         ),
                       ),
-                    ),
               ),
             ],
           ),

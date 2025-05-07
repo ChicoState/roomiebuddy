@@ -1,13 +1,13 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 class AuthStorage {
-  // Keys for SharedPreferences
+  // 
   static const String _userIdKey = 'user_id';
   static const String _emailKey = 'email';
   static const String _passwordKey = 'password';
   static const String _usernameKey = 'username';
+  static const String _profileImagePathKey = 'profile_image_path';
   
-  // Singleton pattern implementation
   static final AuthStorage _instance = AuthStorage._internal();
   
   factory AuthStorage() {
@@ -16,7 +16,6 @@ class AuthStorage {
   
   AuthStorage._internal();
   
-  // Store user credentials
   Future<bool> storeUserCredentials(String userId, String email, String password, String username) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -31,51 +30,33 @@ class AuthStorage {
     }
   }
   
-  // Get user ID
+  // Generic method for getters
+  Future<String?> _getString(String key) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(key);
+    } catch (e) {
+      debugPrint('Error getting $key: $e');
+      return null;
+    }
+  }
+  
   Future<String?> getUserId() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_userIdKey);
-    } catch (e) {
-      debugPrint('Error getting user ID: $e');
-      return null;
-    }
+    return _getString(_userIdKey);
   }
   
-  // Get email
   Future<String?> getEmail() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_emailKey);
-    } catch (e) {
-      debugPrint('Error getting email: $e');
-      return null;
-    }
+    return _getString(_emailKey);
   }
   
-  // Get password
   Future<String?> getPassword() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_passwordKey);
-    } catch (e) {
-      debugPrint('Error getting password: $e');
-      return null;
-    }
+    return _getString(_passwordKey);
   }
   
-  // Get username
   Future<String?> getUsername() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_usernameKey);
-    } catch (e) {
-      debugPrint('Error getting username: $e');
-      return null;
-    }
+    return _getString(_usernameKey);
   }
   
-  // Check if user is logged in
   Future<bool> isLoggedIn() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -85,9 +66,6 @@ class AuthStorage {
       final email = prefs.getString(_emailKey);
       final password = prefs.getString(_passwordKey);
       final username = prefs.getString(_usernameKey);
-      
-      // For development/debugging - REMEMBER: remove or set to false in production (proabably wont happen)
-      debugPrint("Auth check: UserId=$userId, Email=$email, Username=$username");
       
       // Ensure all values exist and aren't empty
       return userId != null && userId.isNotEmpty && 
@@ -100,7 +78,6 @@ class AuthStorage {
     }
   }
   
-  // Clear user credentials (logout)
   Future<bool> clearUserCredentials() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -113,5 +90,20 @@ class AuthStorage {
       debugPrint('Error clearing user credentials: $e');
       return false;
     }
+  }
+  
+  Future<bool> saveProfileImagePath(String imagePath) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_profileImagePathKey, imagePath);
+      return true;
+    } catch (e) {
+      debugPrint('Error storing profile image path: $e');
+      return false;
+    }
+  }
+  
+  Future<String?> getProfileImagePath() async {
+    return _getString(_profileImagePathKey);
   }
 } 

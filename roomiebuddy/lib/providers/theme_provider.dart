@@ -4,11 +4,7 @@ class ThemeProvider extends ChangeNotifier {
   bool _isDarkMode = true; // Dark mode set to default
   Color _themeColor = Colors.blueGrey; // Global theme color
 
-  // Utility colors (Theme independent)
-  Color get errorColor => Colors.red;
-  Color get warningColor => Colors.orange;
-  Color get successColor => Colors.green;
-  
+
   // Global colors (Light Mode)
   Color get lightBackground => Colors.grey[300]!;
   Color get lightCardBackground => Colors.grey[50]!;

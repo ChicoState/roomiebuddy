@@ -123,17 +123,18 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     
-    // Wait for the user data to load
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
 
-    // If there is an error, show it
-    if (_errorMessage.isNotEmpty) {
+    if (!_isLoading && _errorMessage.isNotEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Settings')),
+        appBar: AppBar(
+          title: Text(
+            'Settings',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: themeProvider.currentTextColor,
+            ),
+          ),
+        ),
         body: Center(child: Text(_errorMessage)),
       );
     }
@@ -189,7 +190,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       title: Text(
-                        _username,
+                        _isLoading ? "Loading..." : _username,
                         style: TextStyle(
                           fontSize: 15,
                           overflow: TextOverflow.ellipsis,
@@ -210,7 +211,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       title: Text(
-                        _userId.length > 12 ? "${_userId.substring(0, 11)}..." : _userId,
+                        _isLoading ? "Loading..." : (_userId.length > 12 ? "${_userId.substring(0, 11)}..." : _userId),
                         style: TextStyle(
                           fontSize: 15,
                           overflow: TextOverflow.ellipsis,
@@ -222,11 +223,11 @@ class _SettingsPageState extends State<SettingsPage> {
                         constraints: const BoxConstraints(), 
                         icon: Icon(
                           Icons.copy,
-                          color: themeProvider.currentTextColor,
+                          color: _isLoading ? Colors.grey : themeProvider.currentTextColor,
                           size: 20,
                         ),
                         tooltip: 'Copy User ID', 
-                        onPressed: () {
+                        onPressed: _isLoading ? null : () {
                           Clipboard.setData(ClipboardData(text: _userId));
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('User ID copied to clipboard')),
@@ -343,9 +344,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     fontSize: 15,
                   ),
                 ),
-                trailing: Icon(
+                trailing: const Icon(
                   Icons.logout,
-                  color: themeProvider.errorColor,
+                  color: Colors.red,
                 ),
                 onTap: () {
                   showDialog(
@@ -371,9 +372,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                 (route) => false,
                               );
                             },
-                            child: Text(
+                            child: const Text(
                               'Logout',
-                              style: TextStyle(color: themeProvider.errorColor),
+                              style: TextStyle(color: Colors.red),
                             ),
                           ),
                         ],
